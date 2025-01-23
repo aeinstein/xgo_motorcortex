@@ -2,28 +2,61 @@
 
 
 void loop() {
-    if(read_addr(XGO_BATTERY, 1)) printf("Battery: %d\n", rx_data[0]);
+    if(read_addr(XGO_BATTERY, 1)) {
+        battery = rx_data[0];
 
-    if(read_addr(XGO_YAW, 4)) {
-        float result = Byte2Float(rx_data);
-		result = result - initial_yaw;
-        //printf("YAW: %f\n", result);
+        printf("Battery: %d\n", rx_data[0]);
 
-        uint8_t speed = 128 - (int)result - (int)wanted_yaw;
+        if (battery < 10) {
+            system("sudo poweroff");
+        }
+    }
 
-		if(speed > 5) {
-		    if(verbose) printf("turning: %f - %f = %d\n", wanted_yaw, result, speed);
 
-		    unsigned char cmd[] = {speed};
-		    write_serial_data(XGO_VYAW, cmd, sizeof(cmd));
-		}
+    if(operational) {
+        // When balancing hold yaw
+        if(read_addr(XGO_YAW, 4)) {
+            float result = Byte2Float(rx_data);
+            result = result - initial_yaw;
+
+            const uint8_t speed = 128 - (int)result - (int)wanted_yaw;
+
+            if(speed > 5) {
+                if(verbose) printf("turning: %f - %f = %d\n", wanted_yaw, result, speed);
+
+                unsigned char cmd[] = {speed};
+                write_serial_data(XGO_VYAW, cmd, sizeof(cmd));
+            }
+        }
+    }
+
+
+    // Check state
+    if(read_addr(XGO_STATE, 1)) {
+        //printf("State: %d\n", rx_data[0]);
+        if(rx_data[0] != operational) {
+            operational = rx_data[0];
+            printf("State changed ");
+            switch(operational){
+                case 0x00:
+                    printf("fallen\n");
+                    break;
+
+                case 0x01:
+                    printf("balancing\n");
+                    read_initial_yaw(); // reset initial yaw, when standup
+                    break;
+
+                default:
+                    printf("unknown %d fuck the shit docs\n", operational);
+                    break;
+            }
+        }
     }
 
     /*
 
-    if(read_addr(XGO_STATE, 1)) {
-        printf("State: %d\n", rx_data[0]);
-    }
+
 
     if(read_addr(XGO_PITCH, 4)) {
         const float result = Byte2Float(rx_data);
@@ -267,8 +300,6 @@ int main() {
     read_addr(XGO_FIRMWARE_VERSION, 10);
     printf("firmware version: %s\n", rx_data);
 
-    //read_addr(XGO_VYAW, 1);
-    //printf("rotatespeed: %s\n", rx_data);
 
 	read_initial_yaw();
 
@@ -282,13 +313,18 @@ int main() {
 	unsigned char cmd2[] = {115};
     write_serial_data(XGO_BODYHEIGHT, cmd2, sizeof(cmd2));
 
+    sleep(1);
 
-    wanted_yaw = 90;
+    cmd2[0] = 75;
+    write_serial_data(XGO_BODYHEIGHT, cmd2, sizeof(cmd2));
+    sleep(1);
+
+    wanted_yaw = 180;
 
     while(1){
         loop();
         //sleep(5);
-        usleep(10000);
+        usleep(100000);
     }
 }
 
@@ -297,6 +333,7 @@ bool read_initial_yaw() {
         const float result = Byte2Float(rx_data);
         printf("initial yaw: %f\n", result);
         initial_yaw = result;
+        wanted_yaw = 0;
 		return 1;
     }
 	

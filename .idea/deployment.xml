@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" remoteFilesAllowedToDisappearOnAutoupload="false">
+  <component name="PublishConfigData" serverName="RiderPI (330d6b6b-a321-43ef-b887-2a9415b6e1b7)" remoteFilesAllowedToDisappearOnAutoupload="false">
     <serverData>
       <paths name="RiderPI (330d6b6b-a321-43ef-b887-2a9415b6e1b7)">
         <serverdata>
           <mappings>
-            <mapping deploy="motorcortex" local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/home/aeinstein/motorcortex" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>
