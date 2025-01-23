@@ -1,36 +1,41 @@
-#include <stdio.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <termios.h>
+#include "comm.h"
 
-#include "constants.h"
 
-#define BAUD_RATE B115200
+void loop() {
+    if(read_addr(XGO_BATTERY, 1)) printf("Battery: %d\n", rx_data[0]);
 
-#define MAX_DATA_LEN 256
+    if(read_addr(XGO_YAW, 4)) {
+        float result = Byte2Float(rx_data);
+		result = result - initial_yaw;
+        //printf("YAW: %f\n", result);
 
-uint8_t rx_FLAG = 0;
-uint8_t rx_LEN = 0;
-uint8_t rx_TYPE = 0;
-uint8_t rx_ADDR = 0;
-uint8_t rx_COUNT = 0;
-uint8_t rx_data[MAX_DATA_LEN];
-uint8_t rx_msg[MAX_DATA_LEN];
-bool verbose = false;
-int serial_port;
+        uint8_t speed = 128 - (int)result - (int)wanted_yaw;
 
-bool read_addr(int addr, size_t len);
+		if(speed > 5) {
+		    if(verbose) printf("turning: %f - %f = %d\n", wanted_yaw, result, speed);
 
-float Byte2Float(uint8_t rawdata[4]) {
-    uint32_t temp = (rawdata[3] << 24) | (rawdata[2] << 16) | (rawdata[1] << 8) | rawdata[0];
-    float result;
-    memcpy(&result, &temp, sizeof(float));
-    return result;
+		    unsigned char cmd[] = {speed};
+		    write_serial_data(XGO_VYAW, cmd, sizeof(cmd));
+		}
+    }
+
+    /*
+
+    if(read_addr(XGO_STATE, 1)) {
+        printf("State: %d\n", rx_data[0]);
+    }
+
+    if(read_addr(XGO_PITCH, 4)) {
+        const float result = Byte2Float(rx_data);
+        printf("PITCH: %f\n", result);
+    }
+
+    if(read_addr(XGO_ROLL, 4)) {
+        const float result = Byte2Float(rx_data);
+        printf("ROLL: %f\n", result);
+    }*/
 }
+
 
 bool process_data(char *buffer) {
     size_t msg_index = 0;
@@ -126,23 +131,23 @@ bool process_data(char *buffer) {
                     }
 
                     return true;
-
-                } else {
-                    printf("no finish\n");
-                    rx_FLAG = 0;
-                    rx_COUNT = 0;
-                    rx_ADDR = 0;
-                    rx_LEN = 0;
                 }
+
+                printf("no finish\n");
+                rx_FLAG = 0;
+                rx_COUNT = 0;
+                rx_ADDR = 0;
+                rx_LEN = 0;
                 break;
+
+            default:
+                return false;
             }
         }
     }
-
-    return false;
 }
 
-int read_serial_data(size_t addr, char *buffer, size_t len) {
+int read_serial_data(const size_t addr, char *buffer, const size_t len) {
     if (serial_port < 0) {
         perror("Serial port not opened");
         return -1;
@@ -150,11 +155,12 @@ int read_serial_data(size_t addr, char *buffer, size_t len) {
 
     if(verbose) printf("read\n");
 
-    int mode = 0x02;
+    const int mode = 0x02;
     size_t sum_data = (0x09 + mode + addr + len) % 256;
     sum_data = 255 - sum_data;
 
     unsigned char cmd[] = {0x55, 0x00, 0x09, 0x02, addr, len, sum_data, 0x00, 0xAA};
+
     if(verbose) {
         printf("XGORider: len: %lu\n", sizeof(cmd));
 
@@ -172,28 +178,39 @@ int read_serial_data(size_t addr, char *buffer, size_t len) {
     return 0;
 }
 
-/*
-int write_serial_data(size_t addr, char *value){
-    int len = sizeof(value);
+int write_serial_data(const size_t addr, const char * value, const uint8_t len){
+    if(verbose) printf("send %d bytes\n", len);
 
-    int mode = 0x01;
+    int value_sum = 0;
+    for (uint8_t i = 0; i < len; i++) {
+        value_sum += value[i];
+    }
+
+    if(verbose) printf("val_sum %d\n", value_sum);
+
+    const int mode = 0x01;
     int sum_data = ((len + 0x08) + mode + addr + value_sum) % 256;
     sum_data = 255 - sum_data;
 
+    unsigned char cmd[len + 0x08];
+
+    cmd[0] = 0x55;
+    cmd[1] = 0x00;
+    cmd[2] = len + 0x08;
+    cmd[3] = mode;
+    cmd[4] = addr;
+
+    for (uint8_t i = 0; i < len; i++) {
+        cmd[i + 0x05] = value[i];
+    }
 
 
-    unsigned char cmd[len + 0x08] = {0x55, 0x00, (len + 0x08), mode, addr};
-
-
-
-    cmd[len + 0x06] = sum_data;
-    cmd[len + 0x07] = 0x00;
-    cmd[len + 0x08] = 0xAA;
-
-
+    cmd[len + 0x05] = sum_data;
+    cmd[len + 0x06] = 0x00;
+    cmd[len + 0x07] = 0xAA;
 
     if(verbose) {
-        printf("XGORider: len: %d\n", sizeof(cmd));
+        printf("XGORider: len: %lu\n", sizeof(cmd));
 
         for (int i = 0; i < sizeof(cmd); i++) {
             printf("send 0x%02X \n", cmd[i]);  // %02X sorgt für zweistellige Hex-Werte
@@ -206,20 +223,98 @@ int write_serial_data(size_t addr, char *value){
 
     return 0;
 }
-*/
+
+
+
+bool read_addr(const int addr, size_t len){
+    char read_buf[len];
+
+    memset(read_buf, 0, sizeof(read_buf));
+    const int num_bytes = read_serial_data(addr, read_buf, sizeof(read_buf));
+
+    if(verbose) printf("num_bytes: %d\n", num_bytes);
+
+    if (num_bytes > 0) {
+        if(verbose) {
+            printf("Received: %d\n", rx_data[0]);
+
+            for (int i = 0; i < num_bytes; i++) {
+                printf("got 0x%02X \n", rx_data[i]);  // %02X sorgt für zweistellige Hex-Werte
+            }
+
+            printf("\n");
+        }
+
+        return true;
+    }
+
+    perror("Error reading from serial port");
+
+    return false;
+}
+
+
+float Byte2Float(const uint8_t rawdata[4]) {
+    const uint32_t temp = (rawdata[3] << 24) | (rawdata[2] << 16) | (rawdata[1] << 8) | rawdata[0];
+    float result;
+    memcpy(&result, &temp, sizeof(float));
+    return result;
+}
 
 int main() {
-    serial_port = open("/dev/ttyAMA0", O_RDWR | O_NOCTTY);
+    open_serial_port();
+
+    read_addr(XGO_FIRMWARE_VERSION, 10);
+    printf("firmware version: %s\n", rx_data);
+
+    //read_addr(XGO_VYAW, 1);
+    //printf("rotatespeed: %s\n", rx_data);
+
+	read_initial_yaw();
+
+
+    unsigned char cmd[] = {0x01};
+    write_serial_data(XGO_ACTION, cmd, sizeof(cmd));
+	
+	
+	sleep(5);
+	
+	unsigned char cmd2[] = {115};
+    write_serial_data(XGO_BODYHEIGHT, cmd2, sizeof(cmd2));
+
+
+    wanted_yaw = 90;
+
+    while(1){
+        loop();
+        //sleep(5);
+        usleep(10000);
+    }
+}
+
+bool read_initial_yaw() {
+    if(read_addr(XGO_YAW, 4)) {
+        const float result = Byte2Float(rx_data);
+        printf("initial yaw: %f\n", result);
+        initial_yaw = result;
+		return 1;
+    }
+	
+	return 0;
+}
+
+bool open_serial_port(){
+	serial_port = open("/dev/ttyAMA0", O_RDWR | O_NOCTTY);
     if (serial_port < 0) {
         perror("Error opening serial port");
-        return 1;
+        return 0;
     }
 
     struct termios tty;
     if (tcgetattr(serial_port, &tty) != 0) {
         perror("Error getting terminal attributes");
         close(serial_port);
-        return 1;
+        return 0;
     }
 
     printf("opened\n");
@@ -243,64 +338,9 @@ int main() {
     if (tcsetattr(serial_port, TCSANOW, &tty) != 0) {
         perror("Error setting terminal attributes");
         close(serial_port);
-        return 1;
+        return 0;
     }
 
     if(verbose) printf("setted\n");
-
-    read_addr(XGO_FIRMWARE_VERSION, 10);
-    printf("firmware version: %s\n", rx_data);
-
-    while(1){
-        if(read_addr(XGO_BATTERY, 1)) printf("Battery: %d\n", rx_data[0]);
-
-        if(read_addr(XGO_YAW, 4)) {
-            float result = Byte2Float(rx_data);
-            printf("YAW: %f\n", result);
-        }
-
-        if(read_addr(XGO_PITCH, 4)) {
-            float result = Byte2Float(rx_data);
-            printf("PITCH: %f\n", result);
-        }
-
-        if(read_addr(XGO_ROLL, 4)) {
-            float result = Byte2Float(rx_data);
-            printf("ROLL: %f\n", result);
-        }
-
-        sleep(1);
-    }
-
-    return 0;
+    return 1;
 }
-
-bool read_addr(int addr, size_t len){
-    char read_buf[len];
-
-    memset(read_buf, 0, sizeof(read_buf));
-    int num_bytes = read_serial_data(addr, read_buf, sizeof(read_buf));
-
-    if(verbose) printf("num_bytes: %d\n", num_bytes);
-
-    if (num_bytes > 0) {
-        if(verbose) {
-            printf("Received: %d\n", rx_data[0]);
-
-            for (int i = 0; i < num_bytes; i++) {
-                printf("got 0x%02X \n", rx_data[i]);  // %02X sorgt für zweistellige Hex-Werte
-            }
-
-            printf("\n");
-        }
-
-        return true;
-
-    } else {
-        perror("Error reading from serial port");
-    }
-
-    return false;
-}
-
-
