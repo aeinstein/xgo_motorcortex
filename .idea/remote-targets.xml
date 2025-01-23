@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="RemoteTargetsManager">
+    <option name="projectDefaultTargetUuid" value="80ef246d-75f6-4daf-a964-2d6ff8a4f941" />
+    <targets>
+      <target name="aeinstein@192.168.53.110:22" type="ssh/sftp" uuid="80ef246d-75f6-4daf-a964-2d6ff8a4f941">
+        <config>
+          <option name="projectRootOnTarget" value="/home/aeinstein/xgo_motorcortex" />
+          <option name="serverName" value="aeinstein@192.168.53.110:22 password" />
+        </config>
+      </target>
+    </targets>
+  </component>
+</project>
