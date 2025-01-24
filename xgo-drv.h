@@ -47,6 +47,12 @@ uint8_t leds[4][3] = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
 
 
 static uint8_t XGO_Buttons = 0;
+
+static bool XGO_HOLD_YAW = false;
+static uint8_t XGO_LOW_BATT = 8;
+static bool XGO_SHUTDOWN_ON_LOW_BATT = true;
+
+
 static struct task_struct *thread;
 
 static int initGPIO(void);
@@ -65,6 +71,7 @@ static int16_t readYaw(void);
 static int createFilesystem(void);
 static void destroyFilesystem(void);
 static int16_t readYaw(void);
+static void forceyaw(void);
 
 union B2I16 {
 	int16_t i;

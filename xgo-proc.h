@@ -8,12 +8,14 @@
 #include <linux/proc_fs.h>
 #include "xgo-drv.h"
 
-static struct proc_dir_entry *proc_imu, *proc_yaw, *proc_state, *proc_buttons, *proc_battery, *proc_action, *proc_led1, *proc_led2, *proc_led3, *proc_led4;
+static struct proc_dir_entry *proc_imu, *proc_settings, *proc_yaw, *proc_state, *proc_buttons, *proc_battery, *proc_action, *proc_leds, *proc_led1, *proc_led2, *proc_led3, *proc_led4;
 
 static ssize_t yaw_read(struct file *file, char __user *user_buf, size_t count, loff_t *ppos);
 static ssize_t battery_read(struct file *file, char __user *user_buf, size_t count, loff_t *ppos);
 static ssize_t state_read(struct file *file, char __user *user_buf, size_t count, loff_t *ppos);
 static ssize_t buttons_read(struct file *file, char __user *user_buf, size_t count, loff_t *ppos);
+static ssize_t settings_read(struct file *file, char __user *user_buf, size_t count, loff_t *ppos);
+static ssize_t settings_write(struct file *file, const char __user *user_buf, size_t count, loff_t *ppos);
 
 static const struct proc_ops yaw_ops = {
 	.proc_read = yaw_read,
@@ -30,6 +32,82 @@ static const struct proc_ops battery_ops = {
 static const struct proc_ops buttons_ops = {
 	.proc_read = buttons_read,
 };
+
+static const struct proc_ops settings_ops = {
+	.proc_read = settings_read,
+    .proc_write = settings_write,
+};
+
+static ssize_t settings_read(struct file *file, char __user *user_buf, size_t count, loff_t *ppos) {
+    char buffer[5];
+    size_t len;
+
+    const char *setting_name = file->f_path.dentry->d_name.name;
+
+    // Überprüfen, welcher Wert gelesen werden soll
+    if (strcmp(setting_name, "verbose") == 0) {
+      if(verbose) len = snprintf(buffer, sizeof(buffer), "1\n");
+      else len = snprintf(buffer, sizeof(buffer), "0\n");
+
+    } else if (strcmp(setting_name, "low_batt_level") == 0) {
+        len = snprintf(buffer, sizeof(buffer), "%d\n", XGO_LOW_BATT);
+
+    } else if (strcmp(setting_name, "shutdown_on_low_batt") == 0) {
+      	if(XGO_SHUTDOWN_ON_LOW_BATT) len = snprintf(buffer, sizeof(buffer), "1\n");
+      	else len = snprintf(buffer, sizeof(buffer), "0\n");
+
+    } else if (strcmp(setting_name, "force_yaw") == 0) {
+      	if(XGO_HOLD_YAW) len = snprintf(buffer, sizeof(buffer), "1\n");
+      	else len = snprintf(buffer, sizeof(buffer), "0\n");
+
+    } else {
+        return -EINVAL; // Ungültiger Zugriff
+    }
+
+    return simple_read_from_buffer(user_buf, count, ppos, buffer, len);
+}
+
+static ssize_t settings_write(struct file *file, const char __user *user_buf, size_t count, loff_t *ppos) {
+    char buffer[5];
+    const char *setting_name = file->f_path.dentry->d_name.name;
+
+    // Eingabedaten überprüfen und kopieren
+    if (count >= sizeof(buffer)) {
+        return -EINVAL; // Eingabewert zu groß
+    }
+
+    if (copy_from_user(buffer, user_buf, count)) {
+        return -EFAULT; // Fehler beim Kopieren
+    }
+
+    buffer[count] = '\0'; // Null-terminieren für Sicherheit
+
+    // Einstellungen abhängig vom Namen ändern
+    if (strcmp(setting_name, "verbose") == 0) {
+        if(buffer[0] != 0) verbose = true;
+        else verbose = false;
+
+    } else if (strcmp(setting_name, "low_batt_level") == 0) {
+      	snprintf(buffer, sizeof(buffer), "%d", XGO_LOW_BATT);
+
+    } else if (strcmp(setting_name, "shutdown_on_low_batt") == 0) {
+        if(buffer[0] != 0) XGO_SHUTDOWN_ON_LOW_BATT = true;
+        else XGO_SHUTDOWN_ON_LOW_BATT = false;
+
+    } else if (strcmp(setting_name, "force_yaw") == 0) {
+        if(buffer[0] != 0) XGO_HOLD_YAW = true;
+        else XGO_HOLD_YAW = false;
+
+    } else {
+        return -EINVAL; // Ungültiger Zugriff
+    }
+
+    printk(KERN_INFO "Setting '%s' wurde auf '%s' aktualisiert\n", setting_name, buffer);
+
+    return count;
+}
+
+
 
 static ssize_t buttons_read(struct file *file, char __user *user_buf, size_t count, loff_t *ppos) {
 	char decimal_buffer[3];
@@ -91,25 +169,25 @@ static ssize_t leds_write(struct file *file, const char __user *user_buf, size_t
 
     // Hier können Sie die RGB-Werte auf die spezifische LED-Ansteuerung anwenden.
     // Beispiel: LEDs aktualisieren (in Abhängigkeit vom Dateinamen)
-    if (strcmp(file->f_path.dentry->d_name.name, "led1") == 0) {
+    if (strcmp(file->f_path.dentry->d_name.name, "0") == 0) {
         leds[0][0] = red;   // Setze den LED 1 Rotwert
         leds[0][1] = green;
         leds[0][2] = blue;
         write_serial_data(XGO_LED1, leds[0], 3);
 
-    } else if (strcmp(file->f_path.dentry->d_name.name, "led2") == 0) {
+    } else if (strcmp(file->f_path.dentry->d_name.name, "1") == 0) {
         leds[1][0] = red;
         leds[1][1] = green;
         leds[1][2] = blue;
         write_serial_data(XGO_LED2, leds[1], 3);
 
-    } else if (strcmp(file->f_path.dentry->d_name.name, "led3") == 0) {
+    } else if (strcmp(file->f_path.dentry->d_name.name, "2") == 0) {
         leds[2][0] = red;
         leds[2][1] = green;
         leds[2][2] = blue;
         write_serial_data(XGO_LED3, leds[2], 3);
 
-    } else if (strcmp(file->f_path.dentry->d_name.name, "led4") == 0) {
+    } else if (strcmp(file->f_path.dentry->d_name.name, "3") == 0) {
         leds[3][0] = red;
         leds[3][1] = green;
         leds[3][2] = blue;
@@ -154,23 +232,34 @@ static const struct proc_ops action_ops = {
 
 static int createFilesystem(){
 	proc_imu = proc_mkdir(PROC_DIR, NULL);
+
 	if (!proc_imu) {
 		destroyFilesystem();
 		return -ENOMEM;
 	}
 
+    // /settings
+    proc_settings = proc_mkdir("settings", proc_imu);
+    proc_create("verbose", 0666, proc_settings, &settings_ops);
+    proc_create("low_batt_level", 0666, proc_settings, &settings_ops);
+    proc_create("shutdown_on_low_batt", 0666, proc_settings, &settings_ops);
+    proc_create("force_yaw", 0666, proc_settings, &settings_ops);
+
 	proc_yaw = proc_create("yaw", 0444, proc_imu, &yaw_ops);
 	proc_state = proc_create("state", 0444, proc_imu, &state_ops);
 	proc_buttons = proc_create("buttons", 0444, proc_imu, &buttons_ops);
 	proc_battery = proc_create("battery", 0444, proc_imu, &battery_ops);
-	
-	if (!proc_yaw || !proc_state || !proc_battery || !proc_buttons) return -ENOMEM;
-	
 	proc_action = proc_create("action", 0666, proc_imu, &action_ops);
-	proc_led1 = proc_create("led1", 0666, proc_imu, &led_ops);
-	proc_led2 = proc_create("led2", 0666, proc_imu, &led_ops);
-	proc_led3 = proc_create("led3", 0666, proc_imu, &led_ops);
-	proc_led4 = proc_create("led4", 0666, proc_imu, &led_ops);
+
+	if (!proc_yaw || !proc_state || !proc_battery || !proc_buttons) return -ENOMEM;
+
+
+    // /leds
+    proc_leds = proc_mkdir("leds", proc_imu);
+	proc_led1 = proc_create("0", 0666, proc_leds, &led_ops);
+	proc_led2 = proc_create("1", 0666, proc_leds, &led_ops);
+	proc_led3 = proc_create("2", 0666, proc_leds, &led_ops);
+	proc_led4 = proc_create("3", 0666, proc_leds, &led_ops);
 
 	pr_info("proc bindings created\n");
 	return 0;
@@ -181,13 +270,20 @@ static void destroyFilesystem(){
 	remove_proc_entry("state", proc_imu);
 	remove_proc_entry("buttons", proc_imu);
 	remove_proc_entry("battery", proc_imu);
-	
 	remove_proc_entry("action", proc_imu);
-	remove_proc_entry("led1", proc_imu);
-	remove_proc_entry("led2", proc_imu);
-	remove_proc_entry("led3", proc_imu);
-	remove_proc_entry("led4", proc_imu);
-	
+
+	remove_proc_entry("0", proc_leds);
+	remove_proc_entry("1", proc_leds);
+	remove_proc_entry("2", proc_leds);
+	remove_proc_entry("3", proc_leds);
+	remove_proc_entry("leds", proc_imu);
+
+    remove_proc_entry("verbose", proc_settings);
+    remove_proc_entry("low_batt_level", proc_settings);
+    remove_proc_entry("shutdown_on_low_batt", proc_settings);
+    remove_proc_entry("force_yaw", proc_settings);
+    remove_proc_entry("settings", proc_imu);
+
 	remove_proc_entry(PROC_DIR, NULL);
     pr_info("proc bindings deleted\n");
 }

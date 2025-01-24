@@ -13,18 +13,19 @@ Features:
 Basedir: /proc/XGORider
 In this dir you can find for reading:
 * yaw
-* pitch
-* roll
+* state
+* buttons
 * battery
 * buttons
 
+
 for writing:
 * yaw
-* led1
-* led2
-* led3
-* led4
-* display
+* leds/1 -4
+* action
+* settings/shutdown_on_low_batt
+* settings/low_batt
+* settings/verbose
 
 The values are refreshed in the Background via a Kernel Thread, so no blocking etc.
 Values are only refreshed when in balanced mode. If not refreshing is skipped.

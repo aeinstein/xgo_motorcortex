@@ -7,6 +7,8 @@
 
 union B2I16 conv;
 
+
+
 static int loop(void *data) {
 
 	while (!kthread_should_stop()) {
@@ -17,8 +19,7 @@ static int loop(void *data) {
         if(operational == 0x01) {
             readYaw();
 
-
-
+            if(XGO_HOLD_YAW) forceyaw();
 
 
 
@@ -30,6 +31,16 @@ static int loop(void *data) {
 		msleep(2500);
 	}
 	return 0;
+}
+
+static void forceyaw(){
+	const uint8_t speed = 128 - (current_yaw - wanted_yaw);
+
+	if(speed > 5) {
+        if(verbose) printk(KERN_INFO "turning: %f - %f = %d\n", wanted_yaw, current_yaw, speed);
+        unsigned char cmd[] = {speed};
+        write_serial_data(XGO_VYAW, cmd, sizeof(cmd));
+    }
 }
 
 static int16_t readYaw(void){
