@@ -57,6 +57,9 @@ static ssize_t settings_read(struct file *file, char __user *user_buf, size_t co
     } else if (strcmp(setting_name, "low_batt_level") == 0) {
         len = snprintf(buffer, sizeof(buffer), "%d\n", XGO_LOW_BATT);
 
+    } else if (strcmp(setting_name, "sleep_ms_on_loop") == 0) {
+    	len = snprintf(buffer, sizeof(buffer), "%d\n", XGO_MS_SLEEP_ON_LOOP);
+
     } else if (strcmp(setting_name, "shutdown_on_low_batt") == 0) {
       	if(XGO_SHUTDOWN_ON_LOW_BATT) len = snprintf(buffer, sizeof(buffer), "1\n");
       	else len = snprintf(buffer, sizeof(buffer), "0\n");
