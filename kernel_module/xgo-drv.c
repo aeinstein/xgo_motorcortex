@@ -5,6 +5,7 @@
 #include "xgo-gpio.h"
 #include "xgo-proc.c"
 #include "xgo-serial.c"
+#include "xgo-lcd.c"
 
 union B2I16 conv;
 
@@ -145,6 +146,8 @@ static int __init imu_proc_init(void) {
 	printk(KERN_INFO "                       *");
     printk(KERN_INFO "XGORider init");
 
+
+
     int ret = open_serial_port();
     if (ret) return ret;
 
@@ -153,6 +156,9 @@ static int __init imu_proc_init(void) {
 
     if(num_bytes < 0) return -EIO;
     printk(KERN_INFO "XGORider: firmware version: %s\n", rx_data);
+
+    ret = display_init();
+    if(ret) return ret;
 
     ret = initGPIO();
     if(ret) return -EIO;

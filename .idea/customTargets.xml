@@ -2,7 +2,7 @@
 <project version="4">
   <component name="CLionExternalBuildManager">
     <target id="4d085c23-1543-4bb6-a2d9-cef9e1bc4fab" name="RemotePI" defaultType="MAKE">
-      <configuration id="d2a02e0c-faba-44fb-ae4c-c9379ae54cf9" name="RemotePI" toolchainName="RiderPI" />
+      <configuration id="d2a02e0c-faba-44fb-ae4c-c9379ae54cf9" name="RemotePI" />
     </target>
   </component>
 </project>

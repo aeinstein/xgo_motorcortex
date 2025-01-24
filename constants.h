@@ -35,6 +35,11 @@
 #define GPIO_BUTTON_B 22
 #define GPIO_BUTTON_C 23
 #define GPIO_BUTTON_D 24
+
+#define GPIO_LCD_RST 27
+#define GPIO_LCD_DC 25
+#define GPIO_LCD_BL 0
+
 #define GPIO_OFFSET 512
 
 #endif //CONSTANTS_H
