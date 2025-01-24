@@ -1,16 +1,24 @@
-SUBDIRS := $(wildcard */)
+#SUBDIRS := $(wildcard */)
 MAKEFILES := $(wildcard */Makefile)
-DIRS := $(dir $(MAKEFILES))
+#DIRS := $(dir $(MAKEFILES))
+DIRS := userspace kernel_module
 
 .PHONY: all clean $(DIRS)
 
 all: $(DIRS)
 
 $(DIRS):
-	$(MAKE) -C $@
+	cd $@ && $(MAKE)
+	#$(MAKE) -C $@
+
+#userspace:
+#	$(MAKE) -C userspace
+#
+#kernel_module:
+#	cd $@ && $(MAKE)
 
 clean:
 	for dir in $(DIRS); do \
-		$(MAKE) -C $$dir clean; \
+		cd $$dir && $(MAKE) clean; \
 	done
 
