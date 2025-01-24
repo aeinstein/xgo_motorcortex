@@ -1,64 +1,95 @@
 //
 // Created by aeinstein on 23.01.2025.
 //
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/proc_fs.h>
-#include <linux/uaccess.h>
-#include <linux/serial.h>
-#include <linux/fs.h>
-#include <linux/tty.h>
-#include <linux/tty_flip.h>
-#include <linux/delay.h>
-#include <linux/kthread.h>
-#include <linux/termios.h>
-#include <linux/reboot.h>
-#include "constants.h"
+#include "xgo-drv.h"
+#include "xgo-gpio.h"
+#include "xgo-proc.h"
 
-
-#define PROC_DIR "XGORider"
-#define SERIAL_PORT "/dev/ttyAMA0" // Anpassen je nach Hardware
-#define BAUD_RATE B115200
-#define MAX_DATA_LEN 32
-
-float initial_yaw = 0;
-float wanted_yaw = 0;
-int battery = 100;
-
-uint8_t rx_FLAG = 0;
-uint8_t rx_LEN = 0;
-uint8_t rx_TYPE = 0;
-uint8_t rx_ADDR = 0;
-uint8_t rx_COUNT = 0;
-
-uint8_t rx_data[MAX_DATA_LEN];
-uint8_t rx_msg[MAX_DATA_LEN];
-uint8_t operational = 0x01;
-
-static struct task_struct *thread;
-
-bool verbose = false;
-static bool process_data(char *buffer);
-static struct proc_dir_entry *proc_imu, *proc_yaw, *proc_pitch, *proc_roll, *proc_battery;
-static struct file *serial_file;
-static int read_serial_data(size_t addr, char *buffer, size_t len);
-static bool read_addr(const int addr, size_t len);
+union B2I16 conv;
 
 static int loop(void *data) {
+
 	while (!kthread_should_stop()) {
-        if(read_addr(XGO_BATTERY, 1)) {
-        	battery = rx_data[0];
+	    gpioCheck();
+	    batteryCheck();
+        checkState();
 
-        	printk(KERN_INFO "Battery: %d", battery);
+        if(operational == 0x01) {
+            readYaw();
 
-        	if (battery < 10) {
-                orderly_poweroff(true);
-        	}
-    	}
 
-		msleep(1000);
+
+
+
+
+
+
+
+        }
+
+		msleep(2500);
 	}
 	return 0;
+}
+
+static int16_t readYaw(void){
+    if(read_addr(XGO_YAW_INT, 2)) {
+        conv.b[0] = rx_data[1];
+        conv.b[1] = rx_data[0];
+        current_yaw = conv.i;
+
+        if(verbose) printk(KERN_INFO "current yaw: %d", current_yaw);
+        return current_yaw;
+    }
+
+    return 0;
+}
+
+static bool read_initial_yaw() {
+    wanted_yaw = 0;
+    initial_yaw = readYaw();
+    printk(KERN_INFO "initial yaw: %f", initial_yaw);
+
+    return 0;
+}
+
+
+static void batteryCheck(void) {
+    if(read_addr(XGO_BATTERY, 1)) {
+        battery = rx_data[0];
+
+        printk(KERN_INFO "Battery: %d", battery);
+
+        if (battery < 10) {
+            orderly_poweroff(true);
+        }
+    }
+}
+
+static void checkState(void) {
+    // Check state
+    if(read_addr(XGO_STATE, 1)) {
+        //printf("State: %d\n", rx_data[0]);
+        if(rx_data[0] != operational) {
+            operational = rx_data[0];
+            printk(KERN_INFO "State changed");
+
+            switch(operational){
+                case 0x00:
+                    printk(KERN_WARNING "fallen");
+                    break;
+
+                case 0x01:
+                    printk(KERN_INFO "balancing");
+                    read_initial_yaw(); // reset initial yaw, when standup
+                    break;
+
+                default:
+                    printk(KERN_ERR "unknown %d fuck the shit docs\n", operational);
+                    break;
+            }
+        }
+    }
 }
 
 static bool read_addr(const int addr, size_t len){
@@ -88,6 +119,8 @@ static bool read_addr(const int addr, size_t len){
     return false;
 }
 
+
+
 static int read_serial_data(size_t addr, char *buffer, size_t len) {
     const int mode = 0x02;
     size_t sum_data = (0x09 + mode + addr + len) % 256;
@@ -98,44 +131,78 @@ static int read_serial_data(size_t addr, char *buffer, size_t len) {
     unsigned char cmd[] = {0x55, 0x00, 0x09, mode, addr, len, sum_data, 0x00, 0xAA};
 
     if(verbose){
-    	printk(KERN_INFO "XGORider: len: %d\n", sizeof(cmd));
+    	printk(KERN_INFO "XGORider: read len: %d\n", sizeof(cmd));
 
+        printk(KERN_INFO "tx_data: ");
     	for (int i = 0; i < sizeof(cmd); i++) {
-        	printk(KERN_INFO "send 0x%02X \n", cmd[i]);  // %02X sorgt für zweistellige Hex-Werte
+        	printk(KERN_CONT "0x%02X ", cmd[i]);  // %02X sorgt für zweistellige Hex-Werte
     	}
 
     	printk(KERN_INFO "\n");
 	}
 
     kernel_write(serial_file, cmd, sizeof(cmd), &pos);
+    if(verbose) printk(KERN_INFO "XGORider: written %ld bytes\n", sizeof(cmd));
+
     msleep(200);
 
-    pr_info("Written %ld bytes\n", sizeof(cmd));
-
     if(process_data(buffer)) return rx_LEN -8;
-
 
     return 0;
 }
 
-static ssize_t yaw_read(struct file *file, char __user *user_buf, size_t count, loff_t *ppos) {
-    char buffer[4];
+static int write_serial_data(const size_t addr, char * buffer, const size_t len){
+    if(verbose) printk(KERN_INFO "send %d bytes\n", len);
 
-    uint8_t num_bytes = read_serial_data(XGO_YAW, buffer, sizeof(buffer));
+    loff_t pos = 0;
 
-    if (num_bytes < 0) return -EIO;
+    int value_sum = 0;
+    for (uint8_t i = 0; i < len; i++) {
+        value_sum += buffer[i];
+    }
 
-    printk(KERN_INFO "XGORider: yaw read %ld\n", num_bytes);
+    if(verbose) printk(KERN_INFO "val_sum %d\n", value_sum);
 
-    return simple_read_from_buffer(user_buf, count, ppos, rx_data, num_bytes);
+    const int mode = 0x01;
+    int sum_data = ((len + 0x08) + mode + addr + value_sum) % 256;
+    sum_data = 255 - sum_data;
+
+    unsigned char cmd[len + 0x08];
+
+    cmd[0] = 0x55;
+    cmd[1] = 0x00;
+    cmd[2] = len + 0x08;
+    cmd[3] = mode;
+    cmd[4] = addr;
+
+    for (uint8_t i = 0; i < len; i++) {
+        cmd[i + 0x05] = buffer[i];
+    }
+
+    cmd[len + 0x05] = sum_data;
+    cmd[len + 0x06] = 0x00;
+    cmd[len + 0x07] = 0xAA;
+
+    if(verbose) {
+        printk(KERN_INFO "XGORider: len: %lu\n", sizeof(cmd));
+
+        printk(KERN_INFO "tx_data: ");
+
+        for (int i = 0; i < sizeof(cmd); i++) {
+            printk(KERN_CONT "0x%02X ", cmd[i]);  // %02X sorgt für zweistellige Hex-Werte
+        }
+
+        printk(KERN_INFO "\n");
+    }
+
+    kernel_write(serial_file, cmd, sizeof(cmd), &pos);
+
+    return 0;
 }
 
-static ssize_t battery_read(struct file *file, char __user *user_buf, size_t count, loff_t *ppos) {
-	char decimal_buffer[4];
-	snprintf(decimal_buffer, sizeof(decimal_buffer), "%d", battery);
-    return simple_read_from_buffer(user_buf, count, ppos, decimal_buffer, strlen(decimal_buffer));
-}
 
+
+/*
 static ssize_t pitch_read(struct file *file, char __user *user_buf, size_t count, loff_t *ppos) {
     char buffer[1];
     if (read_serial_data(XGO_PITCH, buffer, sizeof(buffer)) < 0)
@@ -147,13 +214,9 @@ static ssize_t roll_read(struct file *file, char __user *user_buf, size_t count,
     char buffer[1];
     if (read_serial_data(XGO_ROLL, buffer, sizeof(buffer)) < 0)
         return -EIO;
+
     return simple_read_from_buffer(user_buf, count, ppos, buffer, strlen(buffer));
 }
-
-
-static const struct proc_ops yaw_ops = {
-    .proc_read = yaw_read,
-};
 
 static const struct proc_ops pitch_ops = {
     .proc_read = pitch_read,
@@ -163,9 +226,9 @@ static const struct proc_ops roll_ops = {
     .proc_read = roll_read,
 };
 
-static const struct proc_ops battery_ops = {
-    .proc_read = battery_read,
-};
+*/
+
+
 
 static bool process_data(char *buffer) {
     size_t msg_index = 0;
@@ -255,7 +318,7 @@ static bool process_data(char *buffer) {
                     if(verbose) {
                         printk(KERN_INFO "rx_data: ");
                         for (size_t j = 0; j < msg_index; j++) {
-                            printk(KERN_INFO "%02X ", rx_msg[j]);
+                            printk(KERN_CONT "0x%02X ", rx_msg[j]);
                         }
                         printk(KERN_INFO "\n");
 
@@ -279,50 +342,7 @@ static bool process_data(char *buffer) {
     }
 }
 
-static int write_serial_data(const size_t addr, const char * value, const uint8_t len){
-    if(verbose) printk(KERN_INFO "send %d bytes\n", len);
 
-    int value_sum = 0;
-    for (uint8_t i = 0; i < len; i++) {
-        value_sum += value[i];
-    }
-
-    if(verbose) printk(KERN_INFO "val_sum %d\n", value_sum);
-
-    const int mode = 0x01;
-    int sum_data = ((len + 0x08) + mode + addr + value_sum) % 256;
-    sum_data = 255 - sum_data;
-
-    unsigned char cmd[len + 0x08];
-
-    cmd[0] = 0x55;
-    cmd[1] = 0x00;
-    cmd[2] = len + 0x08;
-    cmd[3] = mode;
-    cmd[4] = addr;
-
-    for (uint8_t i = 0; i < len; i++) {
-        cmd[i + 0x05] = value[i];
-    }
-
-    cmd[len + 0x05] = sum_data;
-    cmd[len + 0x06] = 0x00;
-    cmd[len + 0x07] = 0xAA;
-
-    if(verbose) {
-        printk(KERN_INFO "XGORider: len: %lu\n", sizeof(cmd));
-
-        for (int i = 0; i < sizeof(cmd); i++) {
-            printk(KERN_INFO "send 0x%02X \n", cmd[i]);  // %02X sorgt für zweistellige Hex-Werte
-        }
-
-        printk(KERN_INFO "\n");
-    }
-
-    kernel_write(serial_file, cmd, sizeof(cmd), 0);
-
-    return 0;
-}
 
 // Funktion zum Öffnen der seriellen Schnittstelle
 static int open_serial_port(void) {
@@ -365,12 +385,7 @@ static int open_serial_port(void) {
     return 0;
 }
 
-static float Byte2Float(const uint8_t rawdata[4]) {
-    const uint32_t temp = (rawdata[3] << 24) | (rawdata[2] << 16) | (rawdata[1] << 8) | rawdata[0];
-    float result;
-    memcpy(&result, &temp, sizeof(float));
-    return result;
-}
+
 
 static int __init imu_proc_init(void) {
 
@@ -390,50 +405,35 @@ static int __init imu_proc_init(void) {
 	printk(KERN_INFO "                       *");
     printk(KERN_INFO "XGORider init");
 
-    proc_imu = proc_mkdir(PROC_DIR, NULL);
-    if (!proc_imu) {
-        remove_proc_entry("yaw", proc_imu);
-        remove_proc_entry("pitch", proc_imu);
-        remove_proc_entry("roll", proc_imu);
-        remove_proc_entry("battery", proc_imu);
-        remove_proc_entry(PROC_DIR, NULL);
-        return -ENOMEM;
-    }
+
 
     int ret = open_serial_port();
+    if (ret) return ret;
 
-    if (ret) {
-        return ret;
-    }
 
     char buffer[10];
-
     int num_bytes = read_serial_data(XGO_FIRMWARE_VERSION, buffer, sizeof(buffer));
 
     if(num_bytes < 0) return -EIO;
     printk(KERN_INFO "got: %d bytes\n", num_bytes);
     printk(KERN_INFO "firmware version: %s\n", rx_data);
 
+    ret = initGPIO();
+    if(ret) return -EIO;
 
 
-    //simple_read_from_buffer(user_buf, count, ppos, buffer, strlen(buffer));
-
-    proc_yaw = proc_create("yaw", 0444, proc_imu, &yaw_ops);
-    proc_pitch = proc_create("pitch", 0444, proc_imu, &pitch_ops);
-    proc_roll = proc_create("roll", 0444, proc_imu, &roll_ops);
-    proc_battery = proc_create("battery", 0444, proc_imu, &battery_ops);
-
-    if (!proc_yaw || !proc_pitch || !proc_roll || !proc_battery) return -ENOMEM;
-
-    pr_info("proc bindungs created\n");
+    ret = createFilesystem();
+    if(ret) return ret;
 
     thread = kthread_run(loop, NULL, "my_kthread");
-	if (IS_ERR(thread)) {
+	if(IS_ERR(thread)) {
         pr_err("Fehler beim Starten des Kernel-Threads\n");
         return PTR_ERR(thread);
     }
     return 0;
 }
+
+
 
 static void __exit imu_proc_exit(void) {
   	if (thread) {
@@ -441,11 +441,7 @@ static void __exit imu_proc_exit(void) {
     }
 
     filp_close(serial_file, NULL);
-    remove_proc_entry("yaw", proc_imu);
-    remove_proc_entry("pitch", proc_imu);
-    remove_proc_entry("roll", proc_imu);
-    remove_proc_entry("battery", proc_imu);
-    remove_proc_entry(PROC_DIR, NULL);
+    destroyFilesystem();
 }
 
 module_init(imu_proc_init);

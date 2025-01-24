@@ -13,7 +13,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <termios.h>
-
+#include "gpiolib.h"
 #include "constants.h"
 
 #define BAUD_RATE B115200

@@ -23,6 +23,18 @@
 #define XGO_ROLL 0x62
 #define XGO_PITCH 0x63
 #define XGO_YAW 0x64
-#define XGO_LED_COLOR 0x69
+#define XGO_ROLL_INT 0x66
+#define XGO_PITCH_INT 0x67
+#define XGO_YAW_INT 0x68
+#define XGO_LED1 0x69
+#define XGO_LED2 0x6a
+#define XGO_LED3 0x6b
+#define XGO_LED4 0x6c
+
+#define GPIO_BUTTON_A 17
+#define GPIO_BUTTON_B 22
+#define GPIO_BUTTON_C 23
+#define GPIO_BUTTON_D 24
+#define GPIO_OFFSET 512
 
 #endif //CONSTANTS_H
