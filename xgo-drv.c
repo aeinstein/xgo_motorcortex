@@ -69,9 +69,10 @@ static void batteryCheck(void) {
     if(read_addr(XGO_BATTERY, 1)) {
         battery = rx_data[0];
 
-        printk(KERN_INFO "Battery: %d", battery);
+        if(verbose) printk(KERN_INFO "Battery: %d", battery);
 
-        if (battery < 10) {
+        if (battery < XGO_LOW_BATT) {
+          	printk(KERN_WARNING "Battery: %d, force shutdown", battery);
             orderly_poweroff(true);
         }
     }
