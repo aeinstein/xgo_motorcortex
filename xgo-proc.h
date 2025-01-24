@@ -84,18 +84,18 @@ static ssize_t settings_write(struct file *file, const char __user *user_buf, si
 
     // Einstellungen abhängig vom Namen ändern
     if (strcmp(setting_name, "verbose") == 0) {
-        if(buffer[0] != 0) verbose = true;
+        if(buffer[0] != 0x30) verbose = true;
         else verbose = false;
 
     } else if (strcmp(setting_name, "low_batt_level") == 0) {
       	snprintf(buffer, sizeof(buffer), "%d", XGO_LOW_BATT);
 
     } else if (strcmp(setting_name, "shutdown_on_low_batt") == 0) {
-        if(buffer[0] != 0) XGO_SHUTDOWN_ON_LOW_BATT = true;
+        if(buffer[0] != 0x30) XGO_SHUTDOWN_ON_LOW_BATT = true;
         else XGO_SHUTDOWN_ON_LOW_BATT = false;
 
     } else if (strcmp(setting_name, "force_yaw") == 0) {
-        if(buffer[0] != 0) XGO_HOLD_YAW = true;
+        if(buffer[0] != 0x30) XGO_HOLD_YAW = true;
         else XGO_HOLD_YAW = false;
 
     } else {
