@@ -1,24 +1,16 @@
-CC = gcc
-CFLAGS = -Wall -Wextra -O2
-TARGET = comm
-SRCS = comm.c
-OBJS = $(SRCS:.c=.o)
+SUBDIRS := $(wildcard */)
+MAKEFILES := $(wildcard */Makefile)
+DIRS := $(dir $(MAKEFILES))
 
-obj-m += xgo-drv.o
+.PHONY: all clean $(DIRS)
 
-all: $(TARGET) kernel_module
+all: $(DIRS)
 
-$(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS)
-
-
-kernel_module:
-	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
-
-%.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+$(DIRS):
+	$(MAKE) -C $@
 
 clean:
-	rm -f $(TARGET) $(OBJS)
-	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
+	for dir in $(DIRS); do \
+		$(MAKE) -C $$dir clean; \
+	done
 

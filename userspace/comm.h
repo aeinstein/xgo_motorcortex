@@ -14,7 +14,7 @@
 #include <fcntl.h>
 #include <termios.h>
 #include "gpiolib.h"
-#include "constants.h"
+#include "../constants.h"
 
 #define BAUD_RATE B115200
 #define MAX_DATA_LEN 32

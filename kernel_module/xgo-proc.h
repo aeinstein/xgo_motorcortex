@@ -8,7 +8,7 @@
 #include <linux/proc_fs.h>
 #include "xgo-drv.h"
 
-static struct proc_dir_entry *proc_imu, *proc_settings, *proc_yaw, *proc_state, *proc_buttons, *proc_battery, *proc_action, *proc_leds, *proc_led1, *proc_led2, *proc_led3, *proc_led4;
+static struct proc_dir_entry *proc_imu, *proc_settings, *proc_yaw, *proc_state, *proc_buttons, *proc_battery, *proc_action, *proc_leds, *proc_led1, *proc_led2, *proc_led3, *proc_led4, *proc_speed_x, *proc_speed_z;
 
 static ssize_t yaw_read(struct file *file, char __user *user_buf, size_t count, loff_t *ppos);
 static ssize_t battery_read(struct file *file, char __user *user_buf, size_t count, loff_t *ppos);
@@ -16,6 +16,7 @@ static ssize_t state_read(struct file *file, char __user *user_buf, size_t count
 static ssize_t buttons_read(struct file *file, char __user *user_buf, size_t count, loff_t *ppos);
 static ssize_t settings_read(struct file *file, char __user *user_buf, size_t count, loff_t *ppos);
 static ssize_t settings_write(struct file *file, const char __user *user_buf, size_t count, loff_t *ppos);
+static ssize_t translation_write(struct file *file, const char __user *user_buf, size_t count, loff_t *ppos);
 
 static const struct proc_ops yaw_ops = {
 	.proc_read = yaw_read,
@@ -36,6 +37,10 @@ static const struct proc_ops buttons_ops = {
 static const struct proc_ops settings_ops = {
 	.proc_read = settings_read,
     .proc_write = settings_write,
+};
+
+static const struct proc_ops translation_ops = {
+    .proc_write = translation_write,
 };
 
 static ssize_t settings_read(struct file *file, char __user *user_buf, size_t count, loff_t *ppos) {
@@ -67,6 +72,35 @@ static ssize_t settings_read(struct file *file, char __user *user_buf, size_t co
     return simple_read_from_buffer(user_buf, count, ppos, buffer, len);
 }
 
+static ssize_t translation_write(struct file *file, const char __user *user_buf, size_t count, loff_t *ppos) {
+  char buffer[6];
+    const char *setting_name = file->f_path.dentry->d_name.name;
+
+     // Eingabedaten überprüfen und kopieren
+    if (count >= sizeof(buffer)) {
+        return -EINVAL; // Eingabewert zu groß
+    }
+
+    if (copy_from_user(buffer, user_buf, count)) {
+        return -EFAULT; // Fehler beim Kopieren
+    }
+
+    buffer[count] = '\0'; // Null-terminieren für Sicherheit
+
+
+	int8_t speed = 0;
+	snprintf(buffer, sizeof(buffer), "%d", speed);
+
+    if (strcmp(setting_name, "speed_x") == 0) {
+    	write_serial_data(XGO_VX, &speed, 1);
+
+    } else if(strcmp(setting_name, "speed_z") == 0) {
+    	write_serial_data(XGO_VYAW, &speed, 1);
+    }
+
+    return count;
+}
+
 static ssize_t settings_write(struct file *file, const char __user *user_buf, size_t count, loff_t *ppos) {
     char buffer[6];
     const char *setting_name = file->f_path.dentry->d_name.name;
@@ -84,8 +118,13 @@ static ssize_t settings_write(struct file *file, const char __user *user_buf, si
 
     // Einstellungen abhängig vom Namen ändern
     if (strcmp(setting_name, "verbose") == 0) {
-        if(buffer[0] != 0x30) verbose = true;
-        else verbose = false;
+        if(buffer[0] != 0x30) {
+          verbose = true;
+          printk(KERN_INFO "XGORider: verbose enabled");
+        } else {
+          verbose = false;
+          printk(KERN_INFO "XGORider: verbose disabled");
+        }
 
     } else if (strcmp(setting_name, "shutdown_on_low_batt") == 0) {
         if(buffer[0] != 0x30) XGO_SHUTDOWN_ON_LOW_BATT = true;
@@ -105,7 +144,7 @@ static ssize_t settings_write(struct file *file, const char __user *user_buf, si
         return -EINVAL; // Ungültiger Zugriff
     }
 
-    printk(KERN_INFO "Setting '%s' wurde auf '%s' aktualisiert\n", setting_name, buffer);
+    if(verbose) printk(KERN_INFO "Setting '%s' wurde auf '%s' aktualisiert\n", setting_name, buffer);
 
     return count;
 }
@@ -254,6 +293,8 @@ static int createFilesystem(){
 	proc_buttons = proc_create("buttons", 0444, proc_imu, &buttons_ops);
 	proc_battery = proc_create("battery", 0444, proc_imu, &battery_ops);
 	proc_action = proc_create("action", 0666, proc_imu, &action_ops);
+    proc_speed_x = proc_create("speed_x", 0666, proc_imu, &translation_ops);
+    proc_speed_z = proc_create("speed_z", 0666, proc_imu, &translation_ops);
 
 	if (!proc_yaw || !proc_state || !proc_battery || !proc_buttons) return -ENOMEM;
 
@@ -265,7 +306,7 @@ static int createFilesystem(){
 	proc_led3 = proc_create("2", 0666, proc_leds, &led_ops);
 	proc_led4 = proc_create("3", 0666, proc_leds, &led_ops);
 
-	pr_info("proc bindings created\n");
+	pr_info("XGORider: proc bindings created\n");
 	return 0;
 }
 
@@ -275,6 +316,8 @@ static void destroyFilesystem(){
 	remove_proc_entry("buttons", proc_imu);
 	remove_proc_entry("battery", proc_imu);
 	remove_proc_entry("action", proc_imu);
+    remove_proc_entry("speed_x", proc_imu);
+	remove_proc_entry("speed_z", proc_imu);
 
 	remove_proc_entry("0", proc_leds);
 	remove_proc_entry("1", proc_leds);
@@ -290,7 +333,7 @@ static void destroyFilesystem(){
     remove_proc_entry("settings", proc_imu);
 
 	remove_proc_entry(PROC_DIR, NULL);
-    pr_info("proc bindings deleted\n");
+    pr_info("XGORider: proc bindings deleted\n");
 }
 
 #endif //XGO_PROC_H

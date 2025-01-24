@@ -15,12 +15,13 @@
 #include <linux/delay.h>
 #include <linux/kthread.h>
 #include <linux/termios.h>
+#include <linux/version.h>
 #include <linux/reboot.h>
 
-static bool verbose = true;
+// Enable with: echo 1 > /proc/XGORider/settings/verbose
+static bool verbose = false;
 
-
-#include "constants.h"
+#include "../constants.h"
 
 #define PROC_DIR "XGORider"
 #define SERIAL_PORT "/dev/ttyAMA0" // Anpassen je nach Hardware
@@ -48,18 +49,16 @@ uint8_t leds[4][3] = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
 
 static uint8_t XGO_Buttons = 0;
 
+// Settings
 static bool XGO_HOLD_YAW = false;
 static uint8_t XGO_LOW_BATT = 8;
 static bool XGO_SHUTDOWN_ON_LOW_BATT = true;
 static int XGO_MS_SLEEP_ON_LOOP = 200;
 
-
 static struct task_struct *thread;
 
 static int initGPIO(void);
-
 static bool process_data(char *buffer);
-
 static struct file *serial_file;
 static int read_serial_data(size_t addr, char *buffer, size_t len);
 static int write_serial_data(size_t addr, char *buffer, size_t len);

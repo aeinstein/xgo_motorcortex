@@ -10,6 +10,7 @@ union B2I16 conv;
 
 
 static int loop(void *data) {
+	printk(KERN_INFO "XGORider: loop start");
 
 	while (!kthread_should_stop()) {
 	    gpioCheck();
@@ -37,7 +38,7 @@ static void forceyaw(){
 	const uint8_t speed = 128 - (current_yaw - wanted_yaw);
 
 	if(speed > 5) {
-        if(verbose) printk(KERN_INFO "turning: %f - %f = %d\n", wanted_yaw, current_yaw, speed);
+        if(verbose) printk(KERN_INFO "XGORider: turning: %d - %d = %d\n", wanted_yaw, current_yaw, speed);
         unsigned char cmd[] = {speed};
         write_serial_data(XGO_VYAW, cmd, sizeof(cmd));
     }
@@ -49,7 +50,7 @@ static int16_t readYaw(void){
         conv.b[1] = rx_data[0];
         current_yaw = conv.i;
 
-        if(verbose) printk(KERN_INFO "current yaw: %d", current_yaw);
+        if(verbose) printk(KERN_INFO "XGORider: current yaw: %d", current_yaw);
         return current_yaw;
     }
 
@@ -59,7 +60,7 @@ static int16_t readYaw(void){
 static bool read_initial_yaw() {
     wanted_yaw = 0;
     initial_yaw = readYaw();
-    printk(KERN_INFO "initial yaw: %f", initial_yaw);
+    printk(KERN_INFO "XGORider: initial yaw: %f", initial_yaw);
 
     return 0;
 }
@@ -69,10 +70,10 @@ static void batteryCheck(void) {
     if(read_addr(XGO_BATTERY, 1)) {
         battery = rx_data[0];
 
-        if(verbose) printk(KERN_INFO "Battery: %d", battery);
+        if(verbose) printk(KERN_INFO "XGORider: Battery: %d", battery);
 
         if (battery < XGO_LOW_BATT) {
-          	printk(KERN_WARNING "Battery: %d, force shutdown", battery);
+          	printk(KERN_WARNING "XGORider: Battery: %d, force shutdown", battery);
             orderly_poweroff(true);
         }
     }
@@ -84,20 +85,20 @@ static void checkState(void) {
         //printf("State: %d\n", rx_data[0]);
         if(rx_data[0] != operational) {
             operational = rx_data[0];
-            printk(KERN_INFO "State changed");
+            printk(KERN_INFO "XGORider: State changed");
 
             switch(operational){
                 case 0x00:
-                    printk(KERN_WARNING "fallen");
+                    printk(KERN_WARNING "XGORider: fallen");
                     break;
 
                 case 0x01:
-                    printk(KERN_INFO "balancing");
+                    printk(KERN_INFO "XGORider: balancing");
                     read_initial_yaw(); // reset initial yaw, when standup
                     break;
 
                 default:
-                    printk(KERN_ERR "unknown %d fuck the shit docs\n", operational);
+                    printk(KERN_ERR "XGORider: unknown %d fuck the shit docs\n", operational);
                     break;
             }
         }
@@ -110,11 +111,11 @@ static bool read_addr(const int addr, size_t len){
     memset(read_buf, 0, sizeof(read_buf));
     const int num_bytes = read_serial_data(addr, read_buf, sizeof(read_buf));
 
-    if(verbose) printk(KERN_INFO "num_bytes: %d", num_bytes);
+    if(verbose) printk(KERN_INFO "XGORider: num_bytes: %d", num_bytes);
 
     if (num_bytes > 0) {
         if(verbose) {
-            printk(KERN_INFO "Received: %d\n", rx_data[0]);
+            printk(KERN_INFO "XGORider: Received: %d\n", rx_data[0]);
 
             for (int i = 0; i < num_bytes; i++) {
                 printk(KERN_CONT "0x%02X ", rx_data[i]);  // %02X sorgt für zweistellige Hex-Werte
@@ -126,7 +127,7 @@ static bool read_addr(const int addr, size_t len){
         return true;
     }
 
-    printk(KERN_WARNING "Error reading from serial port");
+    printk(KERN_WARNING "XGORider: Error reading from serial port");
 
     return false;
 }
@@ -145,7 +146,7 @@ static int read_serial_data(size_t addr, char *buffer, size_t len) {
     if(verbose){
     	printk(KERN_INFO "XGORider: read len: %d\n", sizeof(cmd));
 
-        printk(KERN_INFO "tx_data: ");
+        printk(KERN_INFO "XGORider: tx_data: ");
     	for (int i = 0; i < sizeof(cmd); i++) {
         	printk(KERN_CONT "0x%02X ", cmd[i]);  // %02X sorgt für zweistellige Hex-Werte
     	}
@@ -156,7 +157,7 @@ static int read_serial_data(size_t addr, char *buffer, size_t len) {
     kernel_write(serial_file, cmd, sizeof(cmd), &pos);
     if(verbose) printk(KERN_INFO "XGORider: written %ld bytes\n", sizeof(cmd));
 
-    msleep(200);
+    //msleep(200);
 
     if(process_data(buffer)) return rx_LEN -8;
 
@@ -164,7 +165,7 @@ static int read_serial_data(size_t addr, char *buffer, size_t len) {
 }
 
 static int write_serial_data(const size_t addr, char * buffer, const size_t len){
-    if(verbose) printk(KERN_INFO "send %d bytes\n", len);
+    if(verbose) printk(KERN_INFO "XGORider: send %d bytes\n", len);
 
     loff_t pos = 0;
 
@@ -173,7 +174,7 @@ static int write_serial_data(const size_t addr, char * buffer, const size_t len)
         value_sum += buffer[i];
     }
 
-    if(verbose) printk(KERN_INFO "val_sum %d\n", value_sum);
+    if(verbose) printk(KERN_INFO "XGORider: val_sum %d\n", value_sum);
 
     const int mode = 0x01;
     int sum_data = ((len + 0x08) + mode + addr + value_sum) % 256;
@@ -198,7 +199,7 @@ static int write_serial_data(const size_t addr, char * buffer, const size_t len)
     if(verbose) {
         printk(KERN_INFO "XGORider: len: %lu\n", sizeof(cmd));
 
-        printk(KERN_INFO "tx_data: ");
+        printk(KERN_INFO "XGORider: tx_data: ");
 
         for (int i = 0; i < sizeof(cmd); i++) {
             printk(KERN_CONT "0x%02X ", cmd[i]);  // %02X sorgt für zweistellige Hex-Werte
@@ -211,36 +212,6 @@ static int write_serial_data(const size_t addr, char * buffer, const size_t len)
 
     return 0;
 }
-
-
-
-/*
-static ssize_t pitch_read(struct file *file, char __user *user_buf, size_t count, loff_t *ppos) {
-    char buffer[1];
-    if (read_serial_data(XGO_PITCH, buffer, sizeof(buffer)) < 0)
-        return -EIO;
-    return simple_read_from_buffer(user_buf, count, ppos, buffer, strlen(buffer));
-}
-
-static ssize_t roll_read(struct file *file, char __user *user_buf, size_t count, loff_t *ppos) {
-    char buffer[1];
-    if (read_serial_data(XGO_ROLL, buffer, sizeof(buffer)) < 0)
-        return -EIO;
-
-    return simple_read_from_buffer(user_buf, count, ppos, buffer, strlen(buffer));
-}
-
-static const struct proc_ops pitch_ops = {
-    .proc_read = pitch_read,
-};
-
-static const struct proc_ops roll_ops = {
-    .proc_read = roll_read,
-};
-
-*/
-
-
 
 static bool process_data(char *buffer) {
     size_t msg_index = 0;
@@ -299,10 +270,10 @@ static bool process_data(char *buffer) {
                 rx_CHECK = 255 - ((rx_LEN + rx_TYPE + rx_ADDR + rx_CHECK) % 256);
 
                 if (num == rx_CHECK) {
-                    if(verbose) printk(KERN_INFO "checksum correct\n");
+                    if(verbose) printk(KERN_INFO "XGORider: checksum correct\n");
                     rx_FLAG++;
                 } else {
-                    printk(KERN_WARNING "wrong checksum\n");
+                    printk(KERN_WARNING "XGORider: wrong checksum\n");
                     rx_FLAG = 0;
                     rx_COUNT = 0;
                     rx_ADDR = 0;
@@ -315,7 +286,7 @@ static bool process_data(char *buffer) {
                 if(num == 0x00){
                     rx_FLAG++;
                 } else {
-                    printk(KERN_WARNING "no finish\n");
+                    printk(KERN_WARNING "XGORider: no finish\n");
                     rx_FLAG = 0;
                     rx_COUNT = 0;
                     rx_ADDR = 0;
@@ -328,19 +299,19 @@ static bool process_data(char *buffer) {
                     rx_FLAG = 0;
 
                     if(verbose) {
-                        printk(KERN_INFO "rx_data: ");
+                        printk(KERN_INFO "XGORider: rx_data: ");
                         for (size_t j = 0; j < msg_index; j++) {
                             printk(KERN_CONT "0x%02X ", rx_msg[j]);
                         }
                         printk(KERN_INFO "\n");
 
-                        printk(KERN_INFO "rxlen: %d\n", rx_LEN);
+                        printk(KERN_INFO "XGORider: rxlen: %d\n", rx_LEN);
                     }
 
                     return true;
                 }
 
-                printk(KERN_WARNING "no finish\n");
+                printk(KERN_WARNING "XGORider: no finish\n");
                 rx_FLAG = 0;
                 rx_COUNT = 0;
                 rx_ADDR = 0;
@@ -354,26 +325,54 @@ static bool process_data(char *buffer) {
     }
 }
 
+// Not working, so many tries, hope you got more luck
+static void modify_serial_port_settings(const char *tty_name, int baudrate){
+    struct tty_struct *tty;
+    struct ktermios new_termios;
 
+//#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
+    //tty = serial_file->private_data;
+//#else
+    tty = (struct tty_struct *)serial_file->private_data;
+//#endif
+
+    if (!tty) {
+        printk(KERN_ERR "XGORider: TTY-Gerät konnte nicht erhalten werden.");
+        return;
+    }
+
+    // Sperren des TTYs während der Modifikation
+    tty_lock(tty);
+    new_termios = tty->termios;
+
+    tty_termios_encode_baud_rate(&new_termios, baudrate, baudrate);
+    tty_set_termios(tty, &new_termios);
+    tty_unlock(tty);
+
+    printk(KERN_INFO "Einstellungen für %s erfolgreich geändert.\n", tty_name);
+}
 
 // Funktion zum Öffnen der seriellen Schnittstelle
 static int open_serial_port(void) {
-    struct termios term;
+    struct ktermios new_settings;
 
-    printk(KERN_INFO "XGORider open %s\n", SERIAL_PORT);
+    printk(KERN_INFO "XGORider: open %s\n", SERIAL_PORT);
     serial_file = filp_open(SERIAL_PORT, O_RDWR | O_NOCTTY | O_SYNC, 0);
 
     if (IS_ERR(serial_file)) {
-        pr_err("Failed to open serial device: %ld\n", PTR_ERR(serial_file));
+        pr_err("XGORider: Failed to open serial device: %ld\n", PTR_ERR(serial_file));
         return PTR_ERR(serial_file);
     }
 
     pr_info("Serial device opened successfully\n");
 
+    //modify_serial_port_settings("ttyAMA0", B115200);
 
+
+    /*
     term.c_cflag  = BAUD_RATE | CLOCAL | CREAD; // 115200 if change, must configure scanner
 
-    /* No parity (8N1) */
+    // No parity (8N1)
     term.c_cflag &= ~PARENB;
     term.c_cflag &= ~CSTOPB;
     term.c_cflag &= ~CSIZE;
@@ -387,7 +386,7 @@ static int open_serial_port(void) {
     term.c_cc[VTIME] = 5; // 0.5 seconds read timeout
     term.c_cc[VMIN] = 0;  // read does not block
 
-    /*
+
     if (serial_tty_ioctl(serial_file, TCSETS, (unsigned long)&term) < 0) {
         pr_err("%s: Failed to set termios\n", __FUNCTION__);
         return -1;
@@ -400,7 +399,6 @@ static int open_serial_port(void) {
 
 
 static int __init imu_proc_init(void) {
-
   	printk(KERN_INFO "              ******       ******");
 	printk(KERN_INFO "            **********   **********");
 	printk(KERN_INFO "          ************* *************");
@@ -417,35 +415,29 @@ static int __init imu_proc_init(void) {
 	printk(KERN_INFO "                       *");
     printk(KERN_INFO "XGORider init");
 
-
-
     int ret = open_serial_port();
     if (ret) return ret;
-
 
     char buffer[10];
     int num_bytes = read_serial_data(XGO_FIRMWARE_VERSION, buffer, sizeof(buffer));
 
     if(num_bytes < 0) return -EIO;
-    printk(KERN_INFO "got: %d bytes\n", num_bytes);
-    printk(KERN_INFO "firmware version: %s\n", rx_data);
+    //printk(KERN_INFO "XGORider: got: %d bytes\n", num_bytes);
+    printk(KERN_INFO "XGORider: firmware version: %s\n", rx_data);
 
     ret = initGPIO();
     if(ret) return -EIO;
-
 
     ret = createFilesystem();
     if(ret) return ret;
 
     thread = kthread_run(loop, NULL, "my_kthread");
 	if(IS_ERR(thread)) {
-        pr_err("Fehler beim Starten des Kernel-Threads\n");
+        pr_err("XGORider: Fehler beim Starten des Kernel-Threads\n");
         return PTR_ERR(thread);
     }
     return 0;
 }
-
-
 
 static void __exit imu_proc_exit(void) {
   	if (thread) {
@@ -461,4 +453,4 @@ module_exit(imu_proc_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Michael Balen");
-MODULE_DESCRIPTION("XGO IMU Procfs Kernel Module");
+MODULE_DESCRIPTION("XGORider IMU Procfs Kernel Module");
