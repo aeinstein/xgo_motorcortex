@@ -28,7 +28,7 @@ static int loop(void *data) {
 
         }
 
-		msleep(2500);
+		msleep(XGO_MS_SLEEP_ON_LOOP);
 	}
 	return 0;
 }

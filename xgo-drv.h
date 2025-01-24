@@ -51,6 +51,7 @@ static uint8_t XGO_Buttons = 0;
 static bool XGO_HOLD_YAW = false;
 static uint8_t XGO_LOW_BATT = 8;
 static bool XGO_SHUTDOWN_ON_LOW_BATT = true;
+static int XGO_MS_SLEEP_ON_LOOP = 200;
 
 
 static struct task_struct *thread;

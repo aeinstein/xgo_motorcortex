@@ -68,7 +68,7 @@ static ssize_t settings_read(struct file *file, char __user *user_buf, size_t co
 }
 
 static ssize_t settings_write(struct file *file, const char __user *user_buf, size_t count, loff_t *ppos) {
-    char buffer[5];
+    char buffer[6];
     const char *setting_name = file->f_path.dentry->d_name.name;
 
     // Eingabedaten überprüfen und kopieren
@@ -87,9 +87,6 @@ static ssize_t settings_write(struct file *file, const char __user *user_buf, si
         if(buffer[0] != 0x30) verbose = true;
         else verbose = false;
 
-    } else if (strcmp(setting_name, "low_batt_level") == 0) {
-      	snprintf(buffer, sizeof(buffer), "%d", XGO_LOW_BATT);
-
     } else if (strcmp(setting_name, "shutdown_on_low_batt") == 0) {
         if(buffer[0] != 0x30) XGO_SHUTDOWN_ON_LOW_BATT = true;
         else XGO_SHUTDOWN_ON_LOW_BATT = false;
@@ -97,6 +94,12 @@ static ssize_t settings_write(struct file *file, const char __user *user_buf, si
     } else if (strcmp(setting_name, "force_yaw") == 0) {
         if(buffer[0] != 0x30) XGO_HOLD_YAW = true;
         else XGO_HOLD_YAW = false;
+
+ 	} else if (strcmp(setting_name, "low_batt_level") == 0) {
+      	snprintf(buffer, sizeof(buffer), "%d", XGO_LOW_BATT);
+
+    } else if (strcmp(setting_name, "sleep_ms_on_loop") == 0) {
+      	snprintf(buffer, sizeof(buffer), "%d", XGO_MS_SLEEP_ON_LOOP);
 
     } else {
         return -EINVAL; // Ungültiger Zugriff
@@ -244,6 +247,7 @@ static int createFilesystem(){
     proc_create("low_batt_level", 0666, proc_settings, &settings_ops);
     proc_create("shutdown_on_low_batt", 0666, proc_settings, &settings_ops);
     proc_create("force_yaw", 0666, proc_settings, &settings_ops);
+    proc_create("sleep_ms_on_loop", 0666, proc_settings, &settings_ops);
 
 	proc_yaw = proc_create("yaw", 0444, proc_imu, &yaw_ops);
 	proc_state = proc_create("state", 0444, proc_imu, &state_ops);
@@ -282,6 +286,7 @@ static void destroyFilesystem(){
     remove_proc_entry("low_batt_level", proc_settings);
     remove_proc_entry("shutdown_on_low_batt", proc_settings);
     remove_proc_entry("force_yaw", proc_settings);
+    remove_proc_entry("sleep_ms_on_loop", proc_settings);
     remove_proc_entry("settings", proc_imu);
 
 	remove_proc_entry(PROC_DIR, NULL);
