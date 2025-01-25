@@ -1,5 +1,5 @@
 MAKEFILES := $(wildcard */Makefile)
-DIRS := userspace kernel_module
+DIRS := userspace kernel_module st7789/project/raspberrypi4b
 
 .PHONY: all clean $(DIRS)
 

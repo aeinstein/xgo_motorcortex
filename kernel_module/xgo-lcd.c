@@ -115,11 +115,13 @@ int display_init(void){
 }
 
 int spi_init(){
-	printk(KERN_INFO "XGORider: Spi Init.");
+	pr_info("XGORider: Spi Init.");
+
 	int ret;
 	const char *device = SPI_PORT;
 	struct file* fDevice = filp_open(device, O_RDWR, 0);
 	struct spidev_data* spi_device = fDevice->private_data;
+
 	spi =  spi_device->spi;
 	spi->bits_per_word = 8;
 	spi->max_speed_hz = 4000000;
@@ -128,7 +130,7 @@ int spi_init(){
 
 	ret = spi_setup( spi );
 	if( ret ){
-		printk(KERN_INFO "XGORider: FAILED to setup Spi.");
+		pr_info("XGORider: FAILED to setup Spi.");
 		return -ENODEV;
 	}
 

@@ -109,10 +109,10 @@ static ssize_t settings_write(struct file *file, const char __user *user_buf, si
     if (strcmp(setting_name, "verbose") == 0) {
         if(buffer[0] != 0x30) {
           verbose = true;
-          printk(KERN_INFO "XGORider: verbose enabled");
+          pr_info("XGORider: verbose enabled");
         } else {
           verbose = false;
-          printk(KERN_INFO "XGORider: verbose disabled");
+          pr_info("XGORider: verbose disabled");
         }
 
     } else if (strcmp(setting_name, "shutdown_on_low_batt") == 0) {
@@ -133,7 +133,7 @@ static ssize_t settings_write(struct file *file, const char __user *user_buf, si
         return -EINVAL; // Ungültiger Zugriff
     }
 
-    if(verbose) printk(KERN_INFO "Setting '%s' wurde auf '%s' aktualisiert\n", setting_name, buffer);
+    if(verbose) pr_info("Setting '%s' wurde auf '%s' aktualisiert\n", setting_name, buffer);
 
     return count;
 }
@@ -165,7 +165,7 @@ static ssize_t state_read(struct file *file, char __user *user_buf, size_t count
 }
 
 static ssize_t leds_write(struct file *file, const char __user *user_buf, size_t count, loff_t *ppos) {
-  	printk(KERN_INFO "led write %s", user_buf);
+  	pr_info("led write %s", user_buf);
     char buffer[8];  // Platz für "#RRGGBB" + Null-Terminierung
     uint8_t red, green, blue;
 
@@ -196,7 +196,7 @@ static ssize_t leds_write(struct file *file, const char __user *user_buf, size_t
     }
 
     // Debug-Log zur Überprüfung der extrahierten RGB-Daten
-    if(verbose) printk(KERN_INFO "LED %s - RGB Werte: R=%u, G=%u, B=%u\n", file->f_path.dentry->d_name.name, red, green, blue);
+    if(verbose) pr_info("LED %s - RGB Werte: R=%u, G=%u, B=%u\n", file->f_path.dentry->d_name.name, red, green, blue);
 
     // Hier können Sie die RGB-Werte auf die spezifische LED-Ansteuerung anwenden.
     // Beispiel: LEDs aktualisieren (in Abhängigkeit vom Dateinamen)
@@ -246,7 +246,7 @@ static ssize_t action_write(struct file *file, const char __user *user_buf, size
         return -EINVAL;           // Fehler bei der Konvertierung
     }
 
-    printk(KERN_INFO "Action: %d", action);
+    pr_info("Action: %d", action);
 	write_serial_data(XGO_ACTION, &action, 1);
 
   return count;

@@ -9,16 +9,20 @@
 #include <linux/module.h>
 #include <linux/uaccess.h>
 #include <linux/serial.h>
-#include <linux/fs.h>
 #include <linux/tty.h>
 #include <linux/tty_flip.h>
 #include <linux/delay.h>
 #include <linux/kthread.h>
-#include <linux/termios.h>
 #include <linux/version.h>
 #include <linux/reboot.h>
-#include <inttypes.h>
-#include <stdbool.h>
+
+// nur für clion on windows
+//#include <stdint.h>
+//#include <stdbool.h>
+//#include <stdio.h>
+//#include <sys/types.h>
+
+
 
 // Enable with: echo 1 > /proc/XGORider/settings/verbose
 static bool verbose = false;

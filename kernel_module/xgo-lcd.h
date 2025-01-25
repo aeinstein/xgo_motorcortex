@@ -39,13 +39,12 @@ struct spidev_data {
 static struct spi_device *spi;
 
 int devSpiProtocol_cmd_read(char *text){
-	printk(KERN_WARNING "devSpiProtocol_cmd_read: %s\n",text);
+	pr_warn("devSpiProtocol_cmd_read: %s\n",text);
 	return 0;
 }
 EXPORT_SYMBOL_GPL(devSpiProtocol_cmd_read);
 
-int devSpiProtocol_cmd_write(char *text)
-{
+int devSpiProtocol_cmd_write(char *text) {
 	char ch = 0x61;
 	struct spi_transfer t = {
 		.tx_buf     = &ch,
@@ -54,7 +53,7 @@ int devSpiProtocol_cmd_write(char *text)
 		.speed_hz = 4000000,
 	};
 	struct spi_message  m;
-	printk(KERN_WARNING "devSpiProtocol_cmd_write: %s\n",text);
+	pr_warn("devSpiProtocol_cmd_write: %s\n",text);
 	spi_message_init(&m);
 	spi_message_add_tail(&t, &m);
 	spi_sync(spi, &m);

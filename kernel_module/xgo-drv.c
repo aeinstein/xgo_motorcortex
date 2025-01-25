@@ -10,7 +10,7 @@
 union B2I16 conv;
 
 static int loop(void *data) {
-	printk(KERN_INFO "XGORider: loop start");
+	pr_info("XGORider: loop start");
 
 	while (!kthread_should_stop()) {
 	    gpioCheck();
@@ -33,7 +33,7 @@ static void forceyaw(){
 	const uint8_t speed = 128 - (current_yaw - wanted_yaw);
 
 	if(speed > 5) {
-        if(verbose) printk(KERN_INFO "XGORider: turning: %d - %d = %d\n", wanted_yaw, current_yaw, speed);
+        if(verbose) pr_info("XGORider: turning: %d - %d = %d\n", wanted_yaw, current_yaw, speed);
         unsigned char cmd[] = {speed};
         write_serial_data(XGO_VYAW, cmd, sizeof(cmd));
     }
@@ -45,7 +45,7 @@ static int16_t readYaw(void){
         conv.b[1] = rx_data[0];
         current_yaw = conv.i;
 
-        if(verbose) printk(KERN_INFO "XGORider: current yaw: %d", current_yaw);
+        if(verbose) pr_info("XGORider: current yaw: %d", current_yaw);
         return current_yaw;
     }
 
@@ -55,7 +55,7 @@ static int16_t readYaw(void){
 static bool read_initial_yaw() {
     wanted_yaw = 0;
     initial_yaw = readYaw();
-    printk(KERN_INFO "XGORider: initial yaw: %f", initial_yaw);
+    pr_info("XGORider: initial yaw: %f", initial_yaw);
 
     return 0;
 }
@@ -65,10 +65,10 @@ static void batteryCheck(void) {
     if(read_addr(XGO_BATTERY, 1)) {
         battery = rx_data[0];
 
-        if(verbose) printk(KERN_INFO "XGORider: Battery: %d", battery);
+        if(verbose) pr_info("XGORider: Battery: %d", battery);
 
         if (battery < XGO_LOW_BATT) {
-          	printk(KERN_WARNING "XGORider: Battery: %d, force shutdown", battery);
+          	pr_warn("XGORider: Battery: %d, force shutdown", battery);
             orderly_poweroff(true);
         }
     }
@@ -80,15 +80,15 @@ static void checkState(void) {
         //printf("State: %d\n", rx_data[0]);
         if(rx_data[0] != operational) {
             operational = rx_data[0];
-            printk(KERN_INFO "XGORider: State changed");
+            pr_info("XGORider: State changed");
 
             switch(operational){
                 case 0x00:
-                    printk(KERN_WARNING "XGORider: fallen");
+                    pr_warn("XGORider: fallen");
                     break;
 
                 case 0x01:
-                    printk(KERN_INFO "XGORider: balancing");
+                    pr_info("XGORider: balancing");
                     read_initial_yaw(); // reset initial yaw, when standup
                     break;
 
@@ -126,25 +126,25 @@ static void modify_serial_port_settings(const char *tty_name, int baudrate){
     tty_set_termios(tty, &new_termios);
     tty_unlock(tty);
 
-    printk(KERN_INFO "Einstellungen für %s erfolgreich geändert.\n", tty_name);
+    pr_info("Einstellungen für %s erfolgreich geändert.\n", tty_name);
 }*/
 
 static int __init imu_proc_init(void) {
-  	printk(KERN_INFO "              ******       ******");
-	printk(KERN_INFO "            **********   **********");
-	printk(KERN_INFO "          ************* *************");
-	printk(KERN_INFO "         ************      ************");
-	printk(KERN_INFO "         ************ KERK ************");
-	printk(KERN_INFO "         ************      ***********");
-	printk(KERN_INFO "          ***************************");
-	printk(KERN_INFO "            ***********************");
-	printk(KERN_INFO "              *******************");
-	printk(KERN_INFO "                ***************");
-	printk(KERN_INFO "                  ***********");
-	printk(KERN_INFO "                    *******");
-	printk(KERN_INFO "                      ***");
-	printk(KERN_INFO "                       *");
-    printk(KERN_INFO "XGORider init");
+  	pr_info("              ******       ******");
+	pr_info("            **********   **********");
+	pr_info("          ************* *************");
+	pr_info("         ************      ************");
+	pr_info("         ************ KERK ************");
+	pr_info("         ************      ***********");
+	pr_info("          ***************************");
+	pr_info("            ***********************");
+	pr_info("              *******************");
+	pr_info("                ***************");
+	pr_info("                  ***********");
+	pr_info("                    *******");
+	pr_info("                      ***");
+	pr_info("                       *");
+    pr_info("XGORider init");
 
 
 
@@ -155,7 +155,7 @@ static int __init imu_proc_init(void) {
     int num_bytes = read_serial_data(XGO_FIRMWARE_VERSION, buffer, sizeof(buffer));
 
     if(num_bytes < 0) return -EIO;
-    printk(KERN_INFO "XGORider: firmware version: %s\n", rx_data);
+    pr_info("XGORider: firmware version: %s\n", rx_data);
 
     ret = initGPIO();
     if(ret) return -EIO;

@@ -6,7 +6,7 @@
 
 // Funktion zum Öffnen der seriellen Schnittstelle
 static int open_serial_port(void) {
-    printk(KERN_INFO "XGORider: open %s\n", SERIAL_PORT);
+    pr_info("XGORider: open %s\n", SERIAL_PORT);
     serial_file = filp_open(SERIAL_PORT, O_RDWR | O_NOCTTY | O_SYNC, 0);
 
     if (IS_ERR(serial_file)) {
@@ -52,23 +52,23 @@ static bool read_addr(const int addr, size_t len){
     memset(read_buf, 0, sizeof(read_buf));
     const int num_bytes = read_serial_data(addr, read_buf, sizeof(read_buf));
 
-    if(verbose) printk(KERN_INFO "XGORider: num_bytes: %d", num_bytes);
+    if(verbose) pr_info("XGORider: num_bytes: %d", num_bytes);
 
     if (num_bytes > 0) {
         if(verbose) {
-            printk(KERN_INFO "XGORider: Received: %d\n", rx_data[0]);
+            pr_info("XGORider: Received: %d\n", rx_data[0]);
 
             for (int i = 0; i < num_bytes; i++) {
-                printk(KERN_CONT "0x%02X ", rx_data[i]);  // %02X sorgt für zweistellige Hex-Werte
+                pr_cont("0x%02X ", rx_data[i]);  // %02X sorgt für zweistellige Hex-Werte
             }
 
-            printk(KERN_INFO "");
+            pr_info("");
         }
 
         return true;
     }
 
-    printk(KERN_WARNING "XGORider: Error reading from serial port");
+    pr_warn("XGORider: Error reading from serial port");
 
     return false;
 }
@@ -83,18 +83,18 @@ static int read_serial_data(size_t addr, char *buffer, size_t len) {
     unsigned char cmd[] = {0x55, 0x00, 0x09, mode, addr, len, sum_data, 0x00, 0xAA};
 
     if(verbose){
-    	printk(KERN_INFO "XGORider: read len: %d\n", sizeof(cmd));
+    	pr_info( "XGORider: read len: %d\n", sizeof(cmd));
 
-        printk(KERN_INFO "XGORider: tx_data: ");
+        pr_info( "XGORider: tx_data: ");
     	for (int i = 0; i < sizeof(cmd); i++) {
-        	printk(KERN_CONT "0x%02X ", cmd[i]);  // %02X sorgt für zweistellige Hex-Werte
+        	pr_cont("0x%02X ", cmd[i]);  // %02X sorgt für zweistellige Hex-Werte
     	}
 
-    	printk(KERN_INFO "\n");
+    	pr_info( "\n");
 	}
 
     kernel_write(serial_file, cmd, sizeof(cmd), &pos);
-    if(verbose) printk(KERN_INFO "XGORider: written %ld bytes\n", sizeof(cmd));
+    if(verbose) pr_info( "XGORider: written %ld bytes\n", sizeof(cmd));
 
     //msleep(200);
 
@@ -104,7 +104,7 @@ static int read_serial_data(size_t addr, char *buffer, size_t len) {
 }
 
 static int write_serial_data(const size_t addr, char * buffer, const size_t len){
-    if(verbose) printk(KERN_INFO "XGORider: send %d bytes\n", len);
+    if(verbose) pr_info( "XGORider: send %d bytes\n", len);
 
     loff_t pos = 0;
 
@@ -113,7 +113,7 @@ static int write_serial_data(const size_t addr, char * buffer, const size_t len)
         value_sum += buffer[i];
     }
 
-    if(verbose) printk(KERN_INFO "XGORider: val_sum %d\n", value_sum);
+    if(verbose) pr_info( "XGORider: val_sum %d\n", value_sum);
 
     const int mode = 0x01;
     int sum_data = ((len + 0x08) + mode + addr + value_sum) % 256;
@@ -136,15 +136,15 @@ static int write_serial_data(const size_t addr, char * buffer, const size_t len)
     cmd[len + 0x07] = 0xAA;
 
     if(verbose) {
-        printk(KERN_INFO "XGORider: len: %lu\n", sizeof(cmd));
+        pr_info( "XGORider: len: %lu\n", sizeof(cmd));
 
-        printk(KERN_INFO "XGORider: tx_data: ");
+        pr_info( "XGORider: tx_data: ");
 
         for (int i = 0; i < sizeof(cmd); i++) {
-            printk(KERN_CONT "0x%02X ", cmd[i]);  // %02X sorgt für zweistellige Hex-Werte
+            pr_cont("0x%02X ", cmd[i]);  // %02X sorgt für zweistellige Hex-Werte
         }
 
-        printk(KERN_INFO "\n");
+        pr_info( "\n");
     }
 
     kernel_write(serial_file, cmd, sizeof(cmd), &pos);
@@ -209,10 +209,10 @@ static bool process_data(char *buffer) {
                 rx_CHECK = 255 - ((rx_LEN + rx_TYPE + rx_ADDR + rx_CHECK) % 256);
 
                 if (num == rx_CHECK) {
-                    if(verbose) printk(KERN_INFO "XGORider: checksum correct\n");
+                    if(verbose) pr_info( "XGORider: checksum correct\n");
                     rx_FLAG++;
                 } else {
-                    printk(KERN_WARNING "XGORider: wrong checksum\n");
+                    pr_warn("XGORider: wrong checksum\n");
                     rx_FLAG = 0;
                     rx_COUNT = 0;
                     rx_ADDR = 0;
@@ -225,7 +225,7 @@ static bool process_data(char *buffer) {
                 if(num == 0x00){
                     rx_FLAG++;
                 } else {
-                    printk(KERN_WARNING "XGORider: no finish\n");
+                    pr_warn("XGORider: no finish\n");
                     rx_FLAG = 0;
                     rx_COUNT = 0;
                     rx_ADDR = 0;
@@ -238,19 +238,19 @@ static bool process_data(char *buffer) {
                     rx_FLAG = 0;
 
                     if(verbose) {
-                        printk(KERN_INFO "XGORider: rx_data: ");
+                        pr_info( "XGORider: rx_data: ");
                         for (size_t j = 0; j < msg_index; j++) {
-                            printk(KERN_CONT "0x%02X ", rx_msg[j]);
+                            pr_cont("0x%02X ", rx_msg[j]);
                         }
-                        printk(KERN_INFO "\n");
+                        pr_info( "\n");
 
-                        printk(KERN_INFO "XGORider: rxlen: %d\n", rx_LEN);
+                        pr_info( "XGORider: rxlen: %d\n", rx_LEN);
                     }
 
                     return true;
                 }
 
-                printk(KERN_WARNING "XGORider: no finish\n");
+                pr_warn("XGORider: no finish\n");
                 rx_FLAG = 0;
                 rx_COUNT = 0;
                 rx_ADDR = 0;
