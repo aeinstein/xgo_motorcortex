@@ -157,11 +157,11 @@ static int __init imu_proc_init(void) {
     if(num_bytes < 0) return -EIO;
     printk(KERN_INFO "XGORider: firmware version: %s\n", rx_data);
 
-    ret = display_init();
-    if(ret) return ret;
-
     ret = initGPIO();
     if(ret) return -EIO;
+
+    ret = display_init();
+    if(ret) return ret;
 
     ret = createFilesystem();
     if(ret) return ret;

@@ -15,12 +15,8 @@ int display_init(void){
 	gpiod_direction_output(dc, 0);
 	gpiod_direction_output(bl, 0);
 
-    spi_device = filp_open(SPI_PORT, O_RDWR, 0);
-
-	if (IS_ERR(spi_device)) {
-		pr_err("XGORider: Failed to open serial device: %ld\n", PTR_ERR(spi_device));
-		return PTR_ERR(spi_device);
-	}
+    int ret = spi_init();
+    if(ret) return ret;
 
 	pr_info("SPI device opened successfully\n");
 
@@ -118,17 +114,37 @@ int display_init(void){
     return 0;
 }
 
+int spi_init(){
+	printk(KERN_INFO "XGORider: Spi Init.");
+	int ret;
+	const char *device = SPI_PORT;
+	struct file* fDevice = filp_open(device, O_RDWR, 0);
+	struct spidev_data* spi_device = fDevice->private_data;
+	spi =  spi_device->spi;
+	spi->bits_per_word = 8;
+	spi->max_speed_hz = 4000000;
+	//spi->chip_select = 0;
+	spi->mode = 3;
+
+	ret = spi_setup( spi );
+	if( ret ){
+		printk(KERN_INFO "XGORider: FAILED to setup Spi.");
+		return -ENODEV;
+	}
+
+	return 0;
+}
+
 void display_command(uint8_t command, char * data, uint8_t length){
   	gpiod_set_value(dc, 0);
 
-    loff_t pos = 0;
-
     char cmd[] = { command };
-	kernel_write(spi_device, cmd, 1, &pos);
+
+	devSpiProtocol_cmd_write(cmd);
 
     if(length > 0){
         gpiod_set_value(dc, 1);
-    	kernel_write(spi_device, data, length, &pos);
+    	devSpiProtocol_cmd_write(data);
     }
 }
 

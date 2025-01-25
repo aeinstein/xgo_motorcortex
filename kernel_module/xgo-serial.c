@@ -6,8 +6,6 @@
 
 // Funktion zum Öffnen der seriellen Schnittstelle
 static int open_serial_port(void) {
-    struct ktermios new_settings;
-
     printk(KERN_INFO "XGORider: open %s\n", SERIAL_PORT);
     serial_file = filp_open(SERIAL_PORT, O_RDWR | O_NOCTTY | O_SYNC, 0);
 

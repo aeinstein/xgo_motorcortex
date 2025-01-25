@@ -17,6 +17,8 @@
 #include <linux/termios.h>
 #include <linux/version.h>
 #include <linux/reboot.h>
+#include <inttypes.h>
+#include <stdbool.h>
 
 // Enable with: echo 1 > /proc/XGORider/settings/verbose
 static bool verbose = false;
