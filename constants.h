@@ -42,4 +42,6 @@
 
 #define GPIO_OFFSET 512
 
+#define SPI_FREQ_MHZ 100
+
 #endif //CONSTANTS_H

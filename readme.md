@@ -47,3 +47,5 @@ When battery is under low_batt the system do poweroff. So no filesystem damage.
 ## Shutdown on Buttons
 You can shutdown, if you press Button A and Button B 3 Seconds. 
 
+## create test image
+hexdump -s 70 -v -e '16/1 "0x%02X, " "\n"' mundk.bmp > we

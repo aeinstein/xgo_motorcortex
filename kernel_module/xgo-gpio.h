@@ -19,7 +19,7 @@ static void gpioCheck(void){
 
 	if(verbose) pr_info("GPIO check: %d", XGO_Buttons);
 
-	if(XGO_Buttons == 3) orderly_poweroff(true);
+	if(XGO_Buttons == 3) orderly_poweroff(1);
 }
 
 static int initGPIO(void){
@@ -32,31 +32,31 @@ static int initGPIO(void){
 	gpiod_is_active_low(button_a);
 
 	if(!button_a || !button_b || !button_c || !button_d){
-		pr_warn("Error creating GPIO descriptors\n");
+		pr_warn("Error creating GPIO descriptors");
 		return -ENODEV;
 	}
 
 	status = gpiod_direction_input(button_a);
 	if(status) {
-		pr_warn("Error setting GPIO direction input\n");
+		pr_warn("Error setting GPIO direction input");
 		return status;
 	}
 
 	status = gpiod_direction_input(button_b);
 	if(status) {
-		pr_warn("Error setting GPIO direction input\n");
+		pr_warn("Error setting GPIO direction input");
 		return status;
 	}
 
 	status = gpiod_direction_input(button_c);
 	if(status) {
-		pr_warn("Error setting GPIO direction input\n");
+		pr_warn("Error setting GPIO direction input");
 		return status;
 	}
 
 	status = gpiod_direction_input(button_d);
 	if(status) {
-		pr_warn("Error setting GPIO direction input\n");
+		pr_warn("Error setting GPIO direction input");
 		return status;
 	}
 

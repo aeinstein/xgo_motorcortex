@@ -39,6 +39,6 @@ static bool process_data(char *buffer);
 static struct file *serial_file;
 static int read_serial_data(size_t addr, char *buffer, size_t len);
 static int write_serial_data(size_t addr, char *buffer, size_t len);
-static bool read_addr(const int addr, size_t len);
+static bool read_addr(int addr, size_t len);
 
 #endif //XGO_SERIAL_H
