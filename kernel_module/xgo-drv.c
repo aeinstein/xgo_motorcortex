@@ -5,7 +5,6 @@
 #include "xgo-gpio.h"
 #include "xgo-proc.c"
 #include "xgo-serial.c"
-#include "xgo-lcd.c"
 
 union B2I16 conv;
 
@@ -160,8 +159,8 @@ static int __init imu_proc_init(void) {
     ret = initGPIO();
     if(ret) return -EIO;
 
-    ret = display_init();
-    if(ret) return ret;
+    //ret = display_init();
+    //if(ret) return ret;
 
     ret = createFilesystem();
     if(ret) return ret;
