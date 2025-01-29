@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket Client</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<table>
+    <tr>
+        <td style="vertical-align: bottom; text-align: center">
+            Battery: <input id="battery"><br>
+            State: <input id="state"><br>
+            Yaw: <input id="yaw"><br>
+            <br>
+            <div id="movement_tab" style="border: 1px solid black; display: inline-block">
+                <table>
+                    <tr>
+                        <td></td>
+                        <td><button id="forw">F</button></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td><button id="left">L</button></td>
+                        <td></td>
+                        <td><button id="right">R</button></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td><button id="backw">B</button></td>
+                        <td></td>
+                    </tr>
+                </table>
+            </div>
+        </td>
+
+        <td style="vertical-align: bottom">
+            <video style="width: 640px; height: 480px; background-color: #00D000"></video>
+        </td>
+        <td style="vertical-align: bottom; text-align: center">
+            <div style="border: 1px solid black; display: inline-block">
+                <table>
+                    <tr>
+                        <td><input type="color" id="led0"></td>
+                        <td><input type="color" id="led1"></td>
+                    </tr>
+                    <tr>
+                        <td><input type="color" id="led2"></td>
+                        <td><input type="color" id="led3"></td>
+                    </tr>
+                </table>
+            </div>
+
+            <br><br>
+
+            <div style="border: 1px solid black; display: inline-block">
+                <table>
+                    <tr>
+                        <td style="height: 130px"><input type="range" id="height" min="17" max="115"></td>
+                    </tr>
+                    <tr>
+                        <td><input type="range" id="roll"  min="-25" max="25"></td>
+                    </tr>
+                </table>
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td></td>
+        <td style="text-align: center">
+            <div>
+                <button>Action 1</button>
+                <button>Action 2</button>
+                <button>Action 3</button>
+                <button>Action 4</button>
+                <button>Action 5</button>
+                <button>Action 6</button>
+                <button>Action 7</button>
+                <button>Action 8</button>
+                <button>Action 9</button>
+                <button>Action 10</button>
+            </div>
+        </td>
+        <td></td>
+    </tr>
+</table>
+
+<script src="client.js"></script>
+</body>
+</html>

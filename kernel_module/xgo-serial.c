@@ -4,6 +4,19 @@
 
 #include "xgo-serial.h"
 
+
+union B2I16 conv;
+
+struct message {
+    char *data;
+    size_t len;
+    struct list_head list;
+};
+
+static LIST_HEAD(send_queue);     // Nachrichtenschlange
+static DEFINE_MUTEX(queue_lock);  // Sperre zur Synchronisation
+
+
 // Funktion zum Öffnen der seriellen Schnittstelle
 static int open_serial_port(void) {
     pr_info("XGORider: open %s\n", SERIAL_PORT);
@@ -43,6 +56,12 @@ static int open_serial_port(void) {
     }
 */
 
+    reader_thread = kthread_run(read_loop, NULL, "my_serial_thread");
+    if(IS_ERR(reader_thread)) {
+        pr_err("XGORider: Fehler beim Starten des Kernel-Threads\n");
+        return PTR_ERR(reader_thread);
+    }
+
     return 0;
 }
 
@@ -52,6 +71,8 @@ static bool read_addr(const int addr, size_t len){
     memset(read_buf, 0, sizeof(read_buf));
     const int num_bytes = read_serial_data(addr, read_buf, sizeof(read_buf));
 
+    return true;
+    /*
     if(verbose) pr_info("XGORider: num_bytes: %d", num_bytes);
 
     if (num_bytes > 0) {
@@ -71,6 +92,7 @@ static bool read_addr(const int addr, size_t len){
     pr_warn("XGORider: Error reading from serial port");
 
     return false;
+    */
 }
 
 static int read_serial_data(size_t addr, char *buffer, size_t len) {
@@ -93,13 +115,17 @@ static int read_serial_data(size_t addr, char *buffer, size_t len) {
     	pr_info( "\n");
 	}
 
-    kernel_write(serial_file, cmd, sizeof(cmd), &pos);
+    addToSendQueue(cmd, sizeof(cmd));
+    //kernel_write(serial_file, cmd, sizeof(cmd), &pos);
     if(verbose) pr_info( "XGORider: written %ld bytes\n", sizeof(cmd));
 
-    //msleep(200);
+    msleep(200);
+
+    /*
+
 
     if(process_data(buffer)) return rx_LEN -8;
-
+*/
     return 0;
 }
 
@@ -147,12 +173,36 @@ static int write_serial_data(const size_t addr, char * buffer, const size_t len)
         pr_info( "\n");
     }
 
-    kernel_write(serial_file, cmd, sizeof(cmd), &pos);
+    addToSendQueue(cmd, sizeof(cmd));
+
+    //kernel_write(serial_file, cmd, sizeof(cmd), &pos);
 
     return 0;
 }
 
-static bool process_data(char *buffer) {
+
+static int read_loop(void *data) {
+    while (!kthread_should_stop()) {
+        if (process_data()) {
+            msleep(100);
+        }
+
+        msleep(100);
+    }
+
+    return 0;
+}
+
+static void stop_read_loop(void) {
+    if(reader_thread) {
+        kthread_stop(reader_thread);
+    }
+}
+
+
+static bool process_data(void) {
+    char buffer[32];
+
     size_t msg_index = 0;
     uint8_t rx_CHECK = 0;
 
@@ -247,6 +297,8 @@ static bool process_data(char *buffer) {
                         pr_info( "XGORider: rxlen: %d\n", rx_LEN);
                     }
 
+                    setBackgroundValues();
+
                     return true;
                 }
 
@@ -262,4 +314,81 @@ static bool process_data(char *buffer) {
             }
         }
     }
+}
+
+static void setBackgroundValues(void) {
+    switch (rx_ADDR) {
+        case XGO_YAW_INT:
+            conv.b[0] = rx_data[1];
+            conv.b[1] = rx_data[0];
+            current_yaw = conv.i;
+            pr_info("XGORider: setting yaw to %d", current_yaw);
+            break;
+
+        case XGO_BATTERY:
+            battery = rx_data[0];
+            pr_info("XGORider: setting battery to %d", battery);
+            break;
+
+        case XGO_STATE:
+            operational = rx_data[0];
+            break;
+
+        default:
+            break;
+    }
+}
+
+// Funktion: Nachricht zur Sende-Warteschlange hinzufügen
+static bool addToSendQueue(const char *cmd, size_t len) {
+    struct message *new_msg;
+
+    // Speicher für neue Nachricht reservieren
+    new_msg = kmalloc(sizeof(*new_msg), GFP_KERNEL);
+    if (!new_msg) {
+        pr_err("XGORider: Speicherzuweisung für Nachricht fehlgeschlagen\n");
+        return false;
+    }
+
+    new_msg->data = kmalloc(len, GFP_KERNEL);
+    if (!new_msg->data) {
+        pr_err("XGORider: Speicherzuweisung für Nachrichtendaten fehlgeschlagen\n");
+        kfree(new_msg);
+        return false;
+    }
+
+    memcpy(new_msg->data, cmd, len);
+    new_msg->len = len;
+
+    // Nachricht zur Warteschlange hinzufügen
+    mutex_lock(&queue_lock);
+    list_add_tail(&new_msg->list, &send_queue);
+    mutex_unlock(&queue_lock);
+
+    pr_info("XGORider: Nachricht zur Warteschlange hinzugefügt (Länge: %zu)\n", len);
+    doQueue();
+    return true;
+}
+
+// Funktion: Nachrichten aus der Sende-Warteschlange verarbeiten
+static void doQueue(void) {
+    struct message *msg, *tmp;
+    loff_t pos = 0;
+
+    mutex_lock(&queue_lock);
+
+    // Alle Nachrichten in der Warteschlange durchlaufen
+    list_for_each_entry_safe(msg, tmp, &send_queue, list) {
+        // Nachricht senden
+        kernel_write(serial_file, msg->data, msg->len, &pos);
+
+        pr_info("XGORider: Nachricht gesendet (Länge: %zu)\n", msg->len);
+
+        // Nachricht aus der Warteschlange entfernen und Speicher freigeben
+        list_del(&msg->list);
+        kfree(msg->data);
+        kfree(msg);
+    }
+
+    mutex_unlock(&queue_lock);
 }

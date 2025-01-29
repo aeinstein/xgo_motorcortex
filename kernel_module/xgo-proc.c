@@ -29,8 +29,33 @@ static const struct proc_ops translation_ops = {
     .proc_write = translation_write,
 };
 
+static ssize_t buttons_read(struct file *file, char __user *user_buf, size_t count, loff_t *ppos) {
+	char decimal_buffer[3];
+	snprintf(decimal_buffer, sizeof(decimal_buffer), "%d", XGO_Buttons);
+	return simple_read_from_buffer(user_buf, count, ppos, decimal_buffer, strlen(decimal_buffer));
+}
+
+static ssize_t yaw_read(struct file *file, char __user *user_buf, size_t count, loff_t *ppos) {
+	char decimal_buffer[7];
+	snprintf(decimal_buffer, sizeof(decimal_buffer), "%d", current_yaw);
+	return simple_read_from_buffer(user_buf, count, ppos, decimal_buffer, strlen(decimal_buffer));
+}
+
+static ssize_t battery_read(struct file *file, char __user *user_buf, size_t count, loff_t *ppos) {
+	char decimal_buffer[4];
+	snprintf(decimal_buffer, sizeof(decimal_buffer), "%d", battery);
+	return simple_read_from_buffer(user_buf, count, ppos, decimal_buffer, strlen(decimal_buffer));
+}
+
+static ssize_t state_read(struct file *file, char __user *user_buf, size_t count, loff_t *ppos) {
+	char decimal_buffer[4];
+	snprintf(decimal_buffer, sizeof(decimal_buffer), "%d", operational);
+	return simple_read_from_buffer(user_buf, count, ppos, decimal_buffer, strlen(decimal_buffer));
+}
+
+
 static ssize_t settings_read(struct file *file, char __user *user_buf, size_t count, loff_t *ppos) {
-    char buffer[5];
+    char buffer[10];
     size_t len;
 
     const char *setting_name = file->f_path.dentry->d_name.name;
@@ -78,9 +103,10 @@ static ssize_t translation_write(struct file *file, const char __user *user_buf,
 
 
 	int8_t speed = 0;
-	snprintf(buffer, sizeof(buffer), "%d", speed);
+	sscanf(buffer, "%d", &speed);
 
     if (strcmp(setting_name, "speed_x") == 0) {
+
     	write_serial_data(XGO_VX, &speed, 1);
 
     } else if(strcmp(setting_name, "speed_z") == 0) {
@@ -91,7 +117,7 @@ static ssize_t translation_write(struct file *file, const char __user *user_buf,
 }
 
 static ssize_t settings_write(struct file *file, const char __user *user_buf, size_t count, loff_t *ppos) {
-    char buffer[6];
+    char buffer[10];
     const char *setting_name = file->f_path.dentry->d_name.name;
 
     // Eingabedaten überprüfen und kopieren
@@ -104,6 +130,8 @@ static ssize_t settings_write(struct file *file, const char __user *user_buf, si
     }
 
     buffer[count] = '\0'; // Null-terminieren für Sicherheit
+
+	pr_info("XGORider: got %s len:%d\n", buffer, count);
 
     // Einstellungen abhängig vom Namen ändern
     if (strcmp(setting_name, "verbose") == 0) {
@@ -124,10 +152,11 @@ static ssize_t settings_write(struct file *file, const char __user *user_buf, si
         else XGO_HOLD_YAW = false;
 
  	} else if (strcmp(setting_name, "low_batt_level") == 0) {
-      	snprintf(buffer, sizeof(buffer), "%d", XGO_LOW_BATT);
+      	sscanf(buffer, "%d", XGO_LOW_BATT);
 
     } else if (strcmp(setting_name, "sleep_ms_on_loop") == 0) {
-      	snprintf(buffer, sizeof(buffer), "%d", XGO_MS_SLEEP_ON_LOOP);
+    	sscanf(buffer, "%d", &XGO_MS_SLEEP_ON_LOOP);
+    	pr_info("XGORider: %d ms sleep on loop\n", XGO_MS_SLEEP_ON_LOOP);
 
     } else {
         return -EINVAL; // Ungültiger Zugriff
@@ -136,32 +165,6 @@ static ssize_t settings_write(struct file *file, const char __user *user_buf, si
     if(verbose) pr_info("Setting '%s' wurde auf '%s' aktualisiert\n", setting_name, buffer);
 
     return count;
-}
-
-
-
-static ssize_t buttons_read(struct file *file, char __user *user_buf, size_t count, loff_t *ppos) {
-	char decimal_buffer[3];
-	snprintf(decimal_buffer, sizeof(decimal_buffer), "%d", XGO_Buttons);
-	return simple_read_from_buffer(user_buf, count, ppos, decimal_buffer, strlen(decimal_buffer));
-}
-
-static ssize_t yaw_read(struct file *file, char __user *user_buf, size_t count, loff_t *ppos) {
-    char decimal_buffer[7];
-    snprintf(decimal_buffer, sizeof(decimal_buffer), "%d", current_yaw);
-    return simple_read_from_buffer(user_buf, count, ppos, decimal_buffer, strlen(decimal_buffer));
-}
-
-static ssize_t battery_read(struct file *file, char __user *user_buf, size_t count, loff_t *ppos) {
-	char decimal_buffer[4];
-	snprintf(decimal_buffer, sizeof(decimal_buffer), "%d", battery);
-    return simple_read_from_buffer(user_buf, count, ppos, decimal_buffer, strlen(decimal_buffer));
-}
-
-static ssize_t state_read(struct file *file, char __user *user_buf, size_t count, loff_t *ppos) {
-    char decimal_buffer[4];
-    snprintf(decimal_buffer, sizeof(decimal_buffer), "%d", operational);
-    return simple_read_from_buffer(user_buf, count, ppos, decimal_buffer, strlen(decimal_buffer));
 }
 
 static ssize_t leds_write(struct file *file, const char __user *user_buf, size_t count, loff_t *ppos) {

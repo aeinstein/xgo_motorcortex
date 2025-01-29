@@ -23,7 +23,6 @@
 //#include <sys/types.h>
 
 
-
 // Enable with: echo 1 > /proc/XGORider/settings/verbose
 static bool verbose = false;
 

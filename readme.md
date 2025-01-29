@@ -1,7 +1,8 @@
-# XGORider - RiderPI Kernel Module
+# XGORider - RiderPI Kernel Module and Userspace Version
 
 ### This is a lightweight kernel module for the xgorider. The provided Python scripts are shitty as hell, slow and dumb.
 
+And yes I know that accessing a tty via /dev is not the 'right' way !!! Right way is to develop a platform driver. You are free to do.
 
 Features:
 * /proc filesystem
@@ -49,3 +50,6 @@ You can shutdown, if you press Button A and Button B 3 Seconds.
 
 ## create test image
 hexdump -s 70 -v -e '16/1 "0x%02X, " "\n"' mundk.bmp > we
+
+
+## Problems 

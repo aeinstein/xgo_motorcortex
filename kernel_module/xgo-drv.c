@@ -174,6 +174,8 @@ static int __init imu_proc_init(void) {
 }
 
 static void __exit imu_proc_exit(void) {
+    stop_read_loop();
+
   	if (thread) {
         kthread_stop(thread);
     }
