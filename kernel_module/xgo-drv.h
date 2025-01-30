@@ -24,7 +24,7 @@
 
 
 // Enable with: echo 1 > /proc/XGORider/settings/verbose
-static bool verbose = false;
+static int verbose = 0x00;
 
 #include "../constants.h"
 

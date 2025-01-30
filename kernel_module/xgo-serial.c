@@ -29,33 +29,6 @@ static int open_serial_port(void) {
 
     pr_info("Serial device opened successfully\n");
 
-    //modify_serial_port_settings("ttyAMA0", B115200);
-
-
-    /*
-    term.c_cflag  = BAUD_RATE | CLOCAL | CREAD; // 115200 if change, must configure scanner
-
-    // No parity (8N1)
-    term.c_cflag &= ~PARENB;
-    term.c_cflag &= ~CSTOPB;
-    term.c_cflag &= ~CSIZE;
-    term.c_cflag |= CS8;
-
-    term.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
-    term.c_oflag &= ~OPOST;
-
-    term.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
-
-    term.c_cc[VTIME] = 5; // 0.5 seconds read timeout
-    term.c_cc[VMIN] = 0;  // read does not block
-
-
-    if (serial_tty_ioctl(serial_file, TCSETS, (unsigned long)&term) < 0) {
-        pr_err("%s: Failed to set termios\n", __FUNCTION__);
-        return -1;
-    }
-*/
-
     reader_thread = kthread_run(read_loop, NULL, "my_serial_thread");
     if(IS_ERR(reader_thread)) {
         pr_err("XGORider: Fehler beim Starten des Kernel-Threads\n");
@@ -69,30 +42,9 @@ static bool read_addr(const int addr, size_t len){
     char read_buf[len];
 
     memset(read_buf, 0, sizeof(read_buf));
-    const int num_bytes = read_serial_data(addr, read_buf, sizeof(read_buf));
+    read_serial_data(addr, read_buf, sizeof(read_buf));
 
     return true;
-    /*
-    if(verbose) pr_info("XGORider: num_bytes: %d", num_bytes);
-
-    if (num_bytes > 0) {
-        if(verbose) {
-            pr_info("XGORider: Received: %d\n", rx_data[0]);
-
-            for (int i = 0; i < num_bytes; i++) {
-                pr_cont("0x%02X ", rx_data[i]);  // %02X sorgt für zweistellige Hex-Werte
-            }
-
-            pr_info("");
-        }
-
-        return true;
-    }
-
-    pr_warn("XGORider: Error reading from serial port");
-
-    return false;
-    */
 }
 
 static int read_serial_data(size_t addr, char *buffer, size_t len) {
@@ -104,7 +56,7 @@ static int read_serial_data(size_t addr, char *buffer, size_t len) {
 
     unsigned char cmd[] = {0x55, 0x00, 0x09, mode, addr, len, sum_data, 0x00, 0xAA};
 
-    if(verbose){
+    if(verbose & VERBOSE_SERIAL){
     	pr_info( "XGORider: read len: %d\n", sizeof(cmd));
 
         pr_info( "XGORider: tx_data: ");
@@ -116,21 +68,14 @@ static int read_serial_data(size_t addr, char *buffer, size_t len) {
 	}
 
     addToSendQueue(cmd, sizeof(cmd));
-    //kernel_write(serial_file, cmd, sizeof(cmd), &pos);
-    if(verbose) pr_info( "XGORider: written %ld bytes\n", sizeof(cmd));
+    if(verbose & VERBOSE_SERIAL) pr_info( "XGORider: written %ld bytes\n", sizeof(cmd));
 
     msleep(200);
-
-    /*
-
-
-    if(process_data(buffer)) return rx_LEN -8;
-*/
     return 0;
 }
 
 static int write_serial_data(const size_t addr, char * buffer, const size_t len){
-    if(verbose) pr_info( "XGORider: send %d bytes\n", len);
+    if(verbose & VERBOSE_SERIAL) pr_info( "XGORider: send %d bytes\n", len);
 
     loff_t pos = 0;
 
@@ -139,7 +84,7 @@ static int write_serial_data(const size_t addr, char * buffer, const size_t len)
         value_sum += buffer[i];
     }
 
-    if(verbose) pr_info( "XGORider: val_sum %d\n", value_sum);
+    if(verbose & VERBOSE_SERIAL) pr_info( "XGORider: val_sum %d\n", value_sum);
 
     const int mode = 0x01;
     int sum_data = ((len + 0x08) + mode + addr + value_sum) % 256;
@@ -161,7 +106,7 @@ static int write_serial_data(const size_t addr, char * buffer, const size_t len)
     cmd[len + 0x06] = 0x00;
     cmd[len + 0x07] = 0xAA;
 
-    if(verbose) {
+    if(verbose & VERBOSE_SERIAL) {
         pr_info( "XGORider: len: %lu\n", sizeof(cmd));
 
         pr_info( "XGORider: tx_data: ");
@@ -259,7 +204,7 @@ static bool process_data(void) {
                 rx_CHECK = 255 - ((rx_LEN + rx_TYPE + rx_ADDR + rx_CHECK) % 256);
 
                 if (num == rx_CHECK) {
-                    if(verbose) pr_info( "XGORider: checksum correct\n");
+                    if(verbose & VERBOSE_SERIAL) pr_info( "XGORider: checksum correct\n");
                     rx_FLAG++;
                 } else {
                     pr_warn("XGORider: wrong checksum\n");
@@ -287,7 +232,7 @@ static bool process_data(void) {
                 if (num == 0xAA) {
                     rx_FLAG = 0;
 
-                    if(verbose) {
+                    if(verbose & VERBOSE_SERIAL) {
                         pr_info( "XGORider: rx_data: ");
                         for (size_t j = 0; j < msg_index; j++) {
                             pr_cont("0x%02X ", rx_msg[j]);
@@ -365,7 +310,7 @@ static bool addToSendQueue(const char *cmd, size_t len) {
     list_add_tail(&new_msg->list, &send_queue);
     mutex_unlock(&queue_lock);
 
-    pr_info("XGORider: Nachricht zur Warteschlange hinzugefügt (Länge: %zu)\n", len);
+    if (verbose & VERBOSE_SERIAL) pr_info("XGORider: Nachricht zur Warteschlange hinzugefügt (Länge: %zu)\n", len);
     doQueue();
     return true;
 }
@@ -382,7 +327,7 @@ static void doQueue(void) {
         // Nachricht senden
         kernel_write(serial_file, msg->data, msg->len, &pos);
 
-        pr_info("XGORider: Nachricht gesendet (Länge: %zu)\n", msg->len);
+        if (verbose & VERBOSE_SERIAL) pr_info("XGORider: Nachricht gesendet (Länge: %zu)\n", msg->len);
 
         // Nachricht aus der Warteschlange entfernen und Speicher freigeben
         list_del(&msg->list);

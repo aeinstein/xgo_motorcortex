@@ -32,7 +32,7 @@ static void forceyaw(){
 	const uint8_t speed = 128 - (current_yaw - wanted_yaw);
 
 	if(speed > 5) {
-        if(verbose) pr_info("XGORider: turning: %d - %d = %d\n", wanted_yaw, current_yaw, speed);
+        if(verbose & VERBOSE_MAIN) pr_info("XGORider: turning: %d - %d = %d\n", wanted_yaw, current_yaw, speed);
         unsigned char cmd[] = {speed};
         write_serial_data(XGO_VYAW, cmd, sizeof(cmd));
     }
@@ -44,7 +44,7 @@ static int16_t readYaw(void){
         conv.b[1] = rx_data[0];
         current_yaw = conv.i;
 
-        if(verbose) pr_info("XGORider: current yaw: %d", current_yaw);
+        if(verbose & VERBOSE_MAIN) pr_info("XGORider: current yaw: %d", current_yaw);
         return current_yaw;
     }
 
@@ -64,7 +64,7 @@ static void batteryCheck(void) {
     if(read_addr(XGO_BATTERY, 1)) {
         battery = rx_data[0];
 
-        if(verbose) pr_info("XGORider: Battery: %d", battery);
+        if(verbose & VERBOSE_MAIN) pr_info("XGORider: Battery: %d", battery);
 
         if (battery < XGO_LOW_BATT) {
           	pr_warn("XGORider: Battery: %d, force shutdown", battery);
