@@ -9,7 +9,9 @@
 #include "xgo-drv.h"
 #include "xgo-serial.h"
 
-static struct proc_dir_entry *proc_imu, *proc_settings, *proc_yaw, *proc_state, *proc_buttons, *proc_battery, *proc_action, *proc_leds, *proc_led1, *proc_led2, *proc_led3, *proc_led4, *proc_speed_x, *proc_speed_z;
+static struct proc_dir_entry *proc_imu, *proc_settings, *proc_yaw, *proc_state, *proc_buttons, *proc_battery, *proc_action,
+	*proc_leds, *proc_led1, *proc_led2, *proc_led3, *proc_led4, *proc_speed_x, *proc_speed_z,
+	*proc_height, *proc_roll;
 
 static ssize_t yaw_read(struct file *file, char __user *user_buf, size_t count, loff_t *ppos);
 static ssize_t battery_read(struct file *file, char __user *user_buf, size_t count, loff_t *ppos);

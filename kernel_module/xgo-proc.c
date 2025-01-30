@@ -110,6 +110,12 @@ static ssize_t translation_write(struct file *file, const char __user *user_buf,
 
     } else if(strcmp(setting_name, "speed_z") == 0) {
     	write_serial_data(XGO_VYAW, &speed, 1);
+
+    } else if(strcmp(setting_name, "height") == 0) {
+    	write_serial_data(XGO_BODYHEIGHT, &speed, 1);
+
+    } else if(strcmp(setting_name, "roll") == 0) {
+    	write_serial_data(XGO_IMU, &speed, 1);
     }
 
     return count;
@@ -286,6 +292,8 @@ static int createFilesystem(){
 	proc_action = proc_create("action", 0666, proc_imu, &action_ops);
     proc_speed_x = proc_create("speed_x", 0666, proc_imu, &translation_ops);
     proc_speed_z = proc_create("speed_z", 0666, proc_imu, &translation_ops);
+	proc_height = proc_create("height", 0666, proc_imu, &translation_ops);
+	proc_roll = proc_create("roll", 0666, proc_imu, &translation_ops);
 
 	if (!proc_yaw || !proc_state || !proc_battery || !proc_buttons) return -ENOMEM;
 
