@@ -99,7 +99,6 @@ static void checkState(void) {
     }
 }
 
-
 // Not working, so many tries, hope you got more luck
 /*
 static void modify_serial_port_settings(const char *tty_name, int baudrate){

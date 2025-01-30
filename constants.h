@@ -45,9 +45,9 @@
 #define SPI_FREQ_MHZ 100
 
 
-#define VERBOSE_SERIAL 0x01;
-#define VERBOSE_GPIO 0x02;
-#define VERBOSE_PROC 0x04;
-#define VERBOSE_MAIN 0x08;
+#define VERBOSE_SERIAL 0x01
+#define VERBOSE_GPIO 0x02
+#define VERBOSE_PROC 0x04
+#define VERBOSE_MAIN 0x08
 
 #endif //CONSTANTS_H

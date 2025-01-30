@@ -62,7 +62,7 @@ static ssize_t settings_read(struct file *file, char __user *user_buf, size_t co
 
     // Überprüfen, welcher Wert gelesen werden soll
     if (strcmp(setting_name, "verbose") == 0) {
-      if(verbose) len = snprintf(buffer, sizeof(buffer), "1\n");
+      if(verbose & VERBOSE_PROC) len = snprintf(buffer, sizeof(buffer), "1\n");
       else len = snprintf(buffer, sizeof(buffer), "0\n");
 
     } else if (strcmp(setting_name, "low_batt_level") == 0) {
@@ -106,7 +106,6 @@ static ssize_t translation_write(struct file *file, const char __user *user_buf,
 	sscanf(buffer, "%d", &speed);
 
     if (strcmp(setting_name, "speed_x") == 0) {
-
     	write_serial_data(XGO_VX, &speed, 1);
 
     } else if(strcmp(setting_name, "speed_z") == 0) {
@@ -131,7 +130,7 @@ static ssize_t settings_write(struct file *file, const char __user *user_buf, si
 
     buffer[count] = '\0'; // Null-terminieren für Sicherheit
 
-	pr_info("XGORider: got %s len:%d\n", buffer, count);
+	if(verbose & VERBOSE_PROC) pr_info("XGORider: got %s len:%d\n", buffer, count);
 
     // Einstellungen abhängig vom Namen ändern
     if (strcmp(setting_name, "verbose") == 0) {
@@ -162,13 +161,13 @@ static ssize_t settings_write(struct file *file, const char __user *user_buf, si
         return -EINVAL; // Ungültiger Zugriff
     }
 
-    if(verbose) pr_info("Setting '%s' wurde auf '%s' aktualisiert\n", setting_name, buffer);
+    if(verbose & VERBOSE_PROC) pr_info("Setting '%s' wurde auf '%s' aktualisiert\n", setting_name, buffer);
 
     return count;
 }
 
 static ssize_t leds_write(struct file *file, const char __user *user_buf, size_t count, loff_t *ppos) {
-  	pr_info("led write %s", user_buf);
+  	if(verbose & VERBOSE_PROC) pr_info("led write %s", user_buf);
     char buffer[8];  // Platz für "#RRGGBB" + Null-Terminierung
     uint8_t red, green, blue;
 
@@ -199,7 +198,7 @@ static ssize_t leds_write(struct file *file, const char __user *user_buf, size_t
     }
 
     // Debug-Log zur Überprüfung der extrahierten RGB-Daten
-    if(verbose) pr_info("LED %s - RGB Werte: R=%u, G=%u, B=%u\n", file->f_path.dentry->d_name.name, red, green, blue);
+    if(verbose & VERBOSE_PROC) pr_info("LED %s - RGB Werte: R=%u, G=%u, B=%u\n", file->f_path.dentry->d_name.name, red, green, blue);
 
     // Hier können Sie die RGB-Werte auf die spezifische LED-Ansteuerung anwenden.
     // Beispiel: LEDs aktualisieren (in Abhängigkeit vom Dateinamen)

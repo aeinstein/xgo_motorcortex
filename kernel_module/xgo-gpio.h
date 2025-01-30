@@ -17,7 +17,7 @@ static void gpioCheck(void){
 	if(!gpiod_get_value(button_c)) XGO_Buttons += 4;
 	if(!gpiod_get_value(button_d)) XGO_Buttons += 8;
 
-	if(verbose) pr_info("GPIO check: %d", XGO_Buttons);
+	if(verbose & VERBOSE_GPIO) pr_info("GPIO check: %d", XGO_Buttons);
 
 	if(XGO_Buttons == 3) orderly_poweroff(1);
 }

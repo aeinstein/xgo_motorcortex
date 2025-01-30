@@ -267,12 +267,12 @@ static void setBackgroundValues(void) {
             conv.b[0] = rx_data[1];
             conv.b[1] = rx_data[0];
             current_yaw = conv.i;
-            pr_info("XGORider: setting yaw to %d", current_yaw);
+            if (verbose & VERBOSE_SERIAL) pr_info("XGORider: setting yaw to %d", current_yaw);
             break;
 
         case XGO_BATTERY:
             battery = rx_data[0];
-            pr_info("XGORider: setting battery to %d", battery);
+            if (verbose & VERBOSE_SERIAL) pr_info("XGORider: setting battery to %d", battery);
             break;
 
         case XGO_STATE:

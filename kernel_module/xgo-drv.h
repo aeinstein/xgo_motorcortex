@@ -22,7 +22,6 @@
 //#include <stdio.h>
 //#include <sys/types.h>
 
-
 // Enable with: echo 1 > /proc/XGORider/settings/verbose
 static int verbose = 0x00;
 
@@ -32,7 +31,6 @@ static int verbose = 0x00;
 
 
 uint8_t leds[4][3] = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
-
 
 static uint8_t XGO_Buttons = 0;
 
