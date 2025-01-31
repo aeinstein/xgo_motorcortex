@@ -8,26 +8,28 @@ function startMovement(evt){
 
     if(currentAction !== "") return;
 
+    let speed = 128;
+    let step = Number(document.getElementById("move_speed").value);
+
     switch(action){
         case "forw":
             currentAction = "X";
-            sendToServer("X:146");
-
+            sendToServer("X:" + (speed + step));
             break;
 
         case "backw":
             currentAction = "X";
-            sendToServer("X:110");
+            sendToServer("X:" + (speed - step));
             break;
 
         case "left":
             currentAction = "Z";
-            sendToServer("Z:146");
+            sendToServer("Z:" + (speed + step));
             break;
 
         case "right":
             currentAction = "Z";
-            sendToServer("Z:110");
+            sendToServer("Z:" + (speed - step));
             break;
     }
 
@@ -78,7 +80,7 @@ function calibration(evt){
 }
 
 function setAction(evt){
-    let button = evt.target.id.substring(-1);
+    let button = evt.target.id.substring(9);
     sendToServer("A:" + button);
 }
 
@@ -87,12 +89,24 @@ function setLedsOff(){
     sendToServer("led1:#000000");
     sendToServer("led2:#000000");
     sendToServer("led3:#000000");
+
+    document.getElementById("led0").value = "#000000";
+    document.getElementById("led1").value = "#000000";
+    document.getElementById("led2").value = "#000000";
+    document.getElementById("led3").value = "#000000";
 }
 
 function startStrobe(){
     strobe_pid = setInterval(rotateStrobe, 100);
 }
 
+function toggleStrobe(){
+    if(strobe_pid === -1){
+        startStrobe();
+    } else {
+        stopStrobe();
+    }
+}
 
 function stopStrobe(){
     clearInterval(strobe_pid);
@@ -124,6 +138,7 @@ document.getElementById("actions").addEventListener("click", setAction);
 document.getElementById("btnCalibration").addEventListener("click", calibration);
 document.getElementById("btnShutdown").addEventListener("click", shutdown);
 document.getElementById("btnLedsOff").addEventListener("click", setLedsOff);
+document.getElementById("btnStrobe").addEventListener("click", toggleStrobe);
 
 function request(path){
     const xhttp = new XMLHttpRequest();

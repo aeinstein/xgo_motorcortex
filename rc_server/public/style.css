@@ -7,15 +7,21 @@ button {
     transform: rotate(270deg);
 }
 
+#move_speed {
+    width: 42px;
+    height: 30px;
+    text-align: center;
+}
+
 #battery, #state, #yaw {
     width: 30px;
     text-align: center;
 }
 
-#btnShutdown, #btnCalibration, #btnLedsOff {
+#btnShutdown, #btnCalibration, #btnLedsOff, #btnStrobe {
     width: 120px;
 }
 
-#btnLedsOff {
+#btnLedsOff, #btnStrobe {
     height: 30px;
 }

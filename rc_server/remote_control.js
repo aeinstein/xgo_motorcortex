@@ -93,6 +93,10 @@ wss.on('connection', (ws) => {
 
         const ar = message.split(':');
         switch (ar[0]) {
+            case 'A':   // forward/backward
+                writeData(device_path + "/action", ar[1])
+                break;
+
             case 'X':   // forward/backward
                 writeData(device_path + "/speed_x", ar[1])
                 break;
