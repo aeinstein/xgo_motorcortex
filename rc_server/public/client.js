@@ -203,3 +203,16 @@ ws.onopen = () => {
     ws.send('Hello, Server!');
 };
 
+const videoElement = document.getElementById('mainvideo');
+
+const rtmp_player = webrtmpjs.createWebRTMP();
+
+rtmp_player.attachMediaElement(videoElement);
+
+rtmp_player.open("riderpi", 9001).then(()=>{   // Host, Port of WebRTMP Proxy
+    rtmp_player.connect("demo").then(()=>{                  // Application name
+        rtmp_player.play("live").then(()=>{      // Stream name
+            console.log("playing");
+        })
+    })
+})

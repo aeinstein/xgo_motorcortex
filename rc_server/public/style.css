@@ -1,6 +1,22 @@
+body {
+    background-color: black;
+    color: #c8c8c8;
+    font-family: arial, sans-serif;
+    font-size: 14px;
+}
+input, select, textarea {
+    background-color: #8c8c8c;
+}
+
 button {
     width: 50px;
-    height: 50px;
+    height: 40px;
+    background-color: gray;
+    margin: 5px;
+    color: #3f3f3f;
+}
+button:hover {
+    background-color: #bababa;
 }
 
 #height {
@@ -14,14 +30,23 @@ button {
 }
 
 #battery, #state, #yaw {
-    width: 30px;
+    width: 45px;
     text-align: center;
 }
 
 #btnShutdown, #btnCalibration, #btnLedsOff, #btnStrobe {
-    width: 120px;
+    width: 100px;
+    height: 35px;
 }
 
 #btnLedsOff, #btnStrobe {
     height: 30px;
+}
+
+#movement_tab, #attention_tab, #actions, #led_tab {
+    border: 1px solid #676767;
+    display: inline-block;
+    background-color: #3a3a3a;
+    border-radius: 15px;
+    padding: 5px;
 }

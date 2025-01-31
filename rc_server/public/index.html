@@ -6,106 +6,108 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-<table>
-    <tr>
-        <td style="vertical-align: bottom; text-align: center">
-            <button id="btnShutdown">Shutdown</button>
-            <br>
-            <br>
-            <button id="btnCalibration">Calibration</button>
-            <br>
-            <br>
-            <br>
-            <table style="width: 100%;">
-                <tr>
-                    <td><label for="battery">Battery:</label></td>
-                    <td><input id="battery"></td>
-                </tr>
-                <tr>
-                    <td><label for="state">State:</label></td>
-                    <td><input id="state"></td>
-                </tr>
-                <tr>
-                    <td><label for="yaw">Yaw:</label></td>
-                    <td><input id="yaw"></td>
-                </tr>
-            </table>
-            <br>
-            <br>
-            <div id="movement_tab" style="border: 1px solid black; display: inline-block">
-                <table>
-                    <tr>
-                        <td></td>
-                        <td><button id="forw">F</button></td>
-                        <td></td>
-                    </tr>
-                    <tr>
-                        <td><button id="left">L</button></td>
-                        <td><input type="number" id="move_speed" value="32"></td>
-                        <td><button id="right">R</button></td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td><button id="backw">B</button></td>
-                        <td></td>
-                    </tr>
-                </table>
-            </div>
-        </td>
-
-        <td style="vertical-align: bottom">
-            <video style="width: 640px; height: 480px; background-color: #00D000"></video>
-        </td>
-        <td style="vertical-align: bottom; text-align: center">
-            <div style="border: 1px solid black; display: inline-block; text-align: center">
-                <button id="btnLedsOff">All off</button>
+<div style="text-align: center">
+    <table style="background-color: #252525; display: inline-block">
+        <tr>
+            <td style="vertical-align: bottom; text-align: center">
+                <button id="btnShutdown">Shutdown</button>
                 <br>
-                <button id="btnStrobe">Strobe</button>
+                <br>
+                <button id="btnCalibration">Calibration</button>
+                <br>
+                <br>
+                <br>
                 <table style="width: 100%;">
                     <tr>
-                        <td><input type="color" id="led0"></td>
-                        <td><input type="color" id="led3"></td>
+                        <td><label for="battery">Battery:</label></td>
+                        <td><input id="battery"></td>
                     </tr>
                     <tr>
-                        <td><input type="color" id="led1"></td>
-                        <td><input type="color" id="led2"></td>
+                        <td><label for="state">State:</label></td>
+                        <td><input id="state"></td>
+                    </tr>
+                    <tr>
+                        <td><label for="yaw">Yaw:</label></td>
+                        <td><input id="yaw"></td>
                     </tr>
                 </table>
-            </div>
+                <br>
+                <br>
+                <div id="movement_tab">
+                    <table>
+                        <tr>
+                            <td></td>
+                            <td><button id="forw">F</button></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td><button id="left">L</button></td>
+                            <td><input type="number" id="move_speed" value="32"></td>
+                            <td><button id="right">R</button></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td><button id="backw">B</button></td>
+                            <td></td>
+                        </tr>
+                    </table>
+                </div>
+            </td>
 
-            <br><br>
+            <td style="vertical-align: bottom">
+                <video controls id="mainvideo" style="width: 640px; height: 480px; background-color: #00D000"></video>
+            </td>
+            <td style="vertical-align: bottom; text-align: center">
+                <div id="led_tab">
+                    <button id="btnLedsOff">All off</button>
+                    <br>
+                    <button id="btnStrobe">Strobe</button>
+                    <table style="width: 100%;">
+                        <tr>
+                            <td><input type="color" id="led0"></td>
+                            <td><input type="color" id="led3"></td>
+                        </tr>
+                        <tr>
+                            <td><input type="color" id="led1"></td>
+                            <td><input type="color" id="led2"></td>
+                        </tr>
+                    </table>
+                </div>
 
-            <div style="border: 1px solid black; display: inline-block">
-                <table>
-                    <tr>
-                        <td style="height: 130px"><input type="range" id="height" min="17" max="115"></td>
-                    </tr>
-                    <tr>
-                        <td><input type="range" id="roll"  min="-25" max="25"></td>
-                    </tr>
-                </table>
-            </div>
-        </td>
-    </tr>
-    <tr>
-        <td></td>
-        <td style="text-align: center">
-            <div id="actions">
-                Actions:
-                <button id="btnAction1">1</button>
-                <button id="btnAction2">2</button>
-                <button id="btnAction3">3</button>
-                <button id="btnAction4">4</button>
-                <button id="btnAction5">5</button>
-                <button id="btnAction6">6</button>
-                <button id="btnAction255">Stop</button>
-            </div>
-        </td>
-        <td></td>
-    </tr>
-</table>
+                <br><br>
 
+                <div id="attention_tab">
+                    <table>
+                        <tr>
+                            <td style="height: 130px"><input type="range" id="height" min="17" max="115"></td>
+                        </tr>
+                        <tr>
+                            <td><input type="range" id="roll"  min="-25" max="25"></td>
+                        </tr>
+                    </table>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td></td>
+            <td style="text-align: center">
+                <div id="actions">
+                    Actions:
+                    <button id="btnAction1">1</button>
+                    <button id="btnAction2">2</button>
+                    <button id="btnAction3">3</button>
+                    <button id="btnAction4">4</button>
+                    <button id="btnAction5">5</button>
+                    <button id="btnAction6">6</button>
+                    <button id="btnAction255">Stop</button>
+                </div>
+            </td>
+            <td></td>
+        </tr>
+    </table>
+</div>
+
+<script src="webrtmp.js"></script>
 <script src="client.js"></script>
 </body>
 </html>
