@@ -62,8 +62,7 @@ static ssize_t settings_read(struct file *file, char __user *user_buf, size_t co
 
     // Überprüfen, welcher Wert gelesen werden soll
     if (strcmp(setting_name, "verbose") == 0) {
-      if(verbose & VERBOSE_PROC) len = snprintf(buffer, sizeof(buffer), "1\n");
-      else len = snprintf(buffer, sizeof(buffer), "0\n");
+    	len = snprintf(buffer, sizeof(buffer), "%d\n", verbose);
 
     } else if (strcmp(setting_name, "low_batt_level") == 0) {
         len = snprintf(buffer, sizeof(buffer), "%d\n", XGO_LOW_BATT);
@@ -102,20 +101,20 @@ static ssize_t translation_write(struct file *file, const char __user *user_buf,
     buffer[count] = '\0'; // Null-terminieren für Sicherheit
 
 
-	int8_t speed = 0;
-	sscanf(buffer, "%d", &speed);
+	int8_t value = 0;
+	sscanf(buffer, "%d", &value);
 
     if (strcmp(setting_name, "speed_x") == 0) {
-    	write_serial_data(XGO_VX, &speed, 1);
+    	write_serial_data(XGO_VX, &value, 1);
 
     } else if(strcmp(setting_name, "speed_z") == 0) {
-    	write_serial_data(XGO_VYAW, &speed, 1);
+    	write_serial_data(XGO_VYAW, &value, 1);
 
     } else if(strcmp(setting_name, "height") == 0) {
-    	write_serial_data(XGO_BODYHEIGHT, &speed, 1);
+    	write_serial_data(XGO_BODYHEIGHT, &value, 1);
 
     } else if(strcmp(setting_name, "roll") == 0) {
-    	write_serial_data(XGO_IMU, &speed, 1);
+    	write_serial_data(XGO_IMU, &value, 1);
     }
 
     return count;
@@ -151,6 +150,10 @@ static ssize_t settings_write(struct file *file, const char __user *user_buf, si
     } else if (strcmp(setting_name, "shutdown_on_low_batt") == 0) {
         if(buffer[0] != 0x30) XGO_SHUTDOWN_ON_LOW_BATT = true;
         else XGO_SHUTDOWN_ON_LOW_BATT = false;
+
+    } else if (strcmp(setting_name, "calibration") == 0) {
+    	if(buffer[0] != 0x30) write_serial_data(XGO_CALIBRATION, "0", 1);
+    	else  write_serial_data(XGO_CALIBRATION, "1", 1);
 
     } else if (strcmp(setting_name, "force_yaw") == 0) {
         if(buffer[0] != 0x30) XGO_HOLD_YAW = true;
@@ -284,6 +287,8 @@ static int createFilesystem(){
     proc_create("shutdown_on_low_batt", 0666, proc_settings, &settings_ops);
     proc_create("force_yaw", 0666, proc_settings, &settings_ops);
     proc_create("sleep_ms_on_loop", 0666, proc_settings, &settings_ops);
+	proc_create("calibration", 0666, proc_settings, &settings_ops);
+
 
 	proc_yaw = proc_create("yaw", 0444, proc_imu, &yaw_ops);
 	proc_state = proc_create("state", 0444, proc_imu, &state_ops);
@@ -317,6 +322,8 @@ static void destroyFilesystem(){
 	remove_proc_entry("action", proc_imu);
     remove_proc_entry("speed_x", proc_imu);
 	remove_proc_entry("speed_z", proc_imu);
+	remove_proc_entry("height", proc_imu);
+	remove_proc_entry("roll", proc_imu);
 
 	remove_proc_entry("0", proc_leds);
 	remove_proc_entry("1", proc_leds);

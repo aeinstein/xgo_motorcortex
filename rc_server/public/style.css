@@ -11,3 +11,11 @@ button {
     width: 30px;
     text-align: center;
 }
+
+#btnShutdown, #btnCalibration, #btnLedsOff {
+    width: 120px;
+}
+
+#btnLedsOff {
+    height: 30px;
+}

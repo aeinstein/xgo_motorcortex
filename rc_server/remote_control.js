@@ -97,8 +97,24 @@ wss.on('connection', (ws) => {
                 writeData(device_path + "/speed_x", ar[1])
                 break;
 
+            case "R":
+                writeData(device_path + "/roll", ar[1])
+                break;
+
+            case "H":
+                writeData(device_path + "/height", ar[1])
+                break;
+
             case 'Z':
                 writeData(device_path + "/speed_z", ar[1])
+                break;
+
+            case "S":
+                writeData(device_path + "/shutdown", ar[1])
+                break;
+
+            case 'C':
+                writeData(device_path + "/settings/calibration", ar[1])
                 break;
 
             case 'led0':

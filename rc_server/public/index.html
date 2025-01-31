@@ -10,9 +10,28 @@
 <table>
     <tr>
         <td style="vertical-align: bottom; text-align: center">
-            Battery: <input id="battery"><br>
-            State: <input id="state"><br>
-            Yaw: <input id="yaw"><br>
+            <button id="btnShutdown">Shutdown</button>
+            <br>
+            <br>
+            <button id="btnCalibration">Calibration</button>
+            <br>
+            <br>
+            <br>
+            <table style="width: 100%;">
+                <tr>
+                    <td><label for="battery">Battery:</label></td>
+                    <td><input id="battery"></td>
+                </tr>
+                <tr>
+                    <td><label for="state">State:</label></td>
+                    <td><input id="state"></td>
+                </tr>
+                <tr>
+                    <td><label for="yaw">Yaw:</label></td>
+                    <td><input id="yaw"></td>
+                </tr>
+            </table>
+            <br>
             <br>
             <div id="movement_tab" style="border: 1px solid black; display: inline-block">
                 <table>
@@ -39,15 +58,16 @@
             <video style="width: 640px; height: 480px; background-color: #00D000"></video>
         </td>
         <td style="vertical-align: bottom; text-align: center">
-            <div style="border: 1px solid black; display: inline-block">
-                <table>
+            <div style="border: 1px solid black; display: inline-block; text-align: center">
+                <button id="btnLedsOff">All off</button>
+                <table style="width: 100%;">
                     <tr>
                         <td><input type="color" id="led0"></td>
-                        <td><input type="color" id="led1"></td>
+                        <td><input type="color" id="led3"></td>
                     </tr>
                     <tr>
+                        <td><input type="color" id="led1"></td>
                         <td><input type="color" id="led2"></td>
-                        <td><input type="color" id="led3"></td>
                     </tr>
                 </table>
             </div>
@@ -69,17 +89,17 @@
     <tr>
         <td></td>
         <td style="text-align: center">
-            <div>
-                <button>Action 1</button>
-                <button>Action 2</button>
-                <button>Action 3</button>
-                <button>Action 4</button>
-                <button>Action 5</button>
-                <button>Action 6</button>
-                <button>Action 7</button>
-                <button>Action 8</button>
-                <button>Action 9</button>
-                <button>Action 10</button>
+            <div id="actions">
+                <button id="btnAction1">Action 1</button>
+                <button id="btnAction2">Action 2</button>
+                <button id="btnAction3">Action 3</button>
+                <button id="btnAction4">Action 4</button>
+                <button id="btnAction5">Action 5</button>
+                <button id="btnAction6">Action 6</button>
+                <button id="btnAction7">Action 7</button>
+                <button id="btnAction8">Action 8</button>
+                <button id="btnAction9">Action 9</button>
+                <button id="btnAction10">Action 10</button>
             </div>
         </td>
         <td></td>

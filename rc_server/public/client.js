@@ -1,4 +1,6 @@
 let currentAction = "";
+let calibration_mode = false;
+let strobe_pid = -1;
 
 function startMovement(evt){
     console.log(evt);
@@ -50,11 +52,63 @@ function sendToServer(msg){
 }
 
 function setHeight(evt){
-    sendToServer("H:" + evt.target.value);
+    let value = Number(evt.target.value);
+    value += 128;
+    sendToServer("H:" + value);
 }
 
 function setRoll(evt){
-    sendToServer("R:" + evt.target.value);
+    let value = Number(evt.target.value);
+    value += 128;
+    sendToServer("R:" + value);
+}
+
+function shutdown(evt){
+    sendToServer("S:0");
+}
+
+function calibration(evt){
+    if(calibration_mode) {
+        evt.target.style.backgroundColor = "#00FF00";
+        sendToServer("C:0");
+    } else {
+        evt.target.style.backgroundColor = "initial";
+        sendToServer("C:1");
+    }
+}
+
+function setAction(evt){
+    let button = evt.target.id.substring(-1);
+    sendToServer("A:" + button);
+}
+
+function setLedsOff(){
+    sendToServer("led0:#000000");
+    sendToServer("led1:#000000");
+    sendToServer("led2:#000000");
+    sendToServer("led3:#000000");
+}
+
+function startStrobe(){
+    strobe_pid = setInterval(rotateStrobe, 100);
+}
+
+
+function stopStrobe(){
+    clearInterval(strobe_pid);
+    strobe_pid = -1;
+    setLedsOff();
+}
+
+
+let currentLed= 0;
+function rotateStrobe(){
+    sendToServer("led" + currentLed + ":#000000");
+    document.getElementById("led" + currentLed).value = "#000000";
+    currentLed++;
+    if(currentLed === 4) currentLed = 0;
+    sendToServer("led" + currentLed + ":#0000FF");
+    document.getElementById("led" + currentLed).value = "#0000FF";
 }
 
 // EventHandler
@@ -66,7 +120,10 @@ document.getElementById("led0").addEventListener("change", setLed);
 document.getElementById("led1").addEventListener("change", setLed);
 document.getElementById("led2").addEventListener("change", setLed);
 document.getElementById("led3").addEventListener("change", setLed);
-
+document.getElementById("actions").addEventListener("click", setAction);
+document.getElementById("btnCalibration").addEventListener("click", calibration);
+document.getElementById("btnShutdown").addEventListener("click", shutdown);
+document.getElementById("btnLedsOff").addEventListener("click", setLedsOff);
 
 function request(path){
     const xhttp = new XMLHttpRequest();
@@ -80,11 +137,11 @@ function request(path){
                 case "state":
                     switch(this.responseText) {
                     case "0":
-                        document.getElementById("state").value = "OK";
+                        document.getElementById("state").value = "Fallen";
                         break;
 
                     case "1":
-                        document.getElementById("state").value = "FALLEN";
+                        document.getElementById("state").value = "OK";
                         break;
 
                     default:
@@ -130,3 +187,4 @@ ws.onopen = () => {
     console.log('Connected to server');
     ws.send('Hello, Server!');
 };
+
