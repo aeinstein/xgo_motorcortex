@@ -1,0 +1,18 @@
+[Unit]
+Description=RC Server
+
+[Service]
+ExecStart=/usr/bin/node /home/pi/motorcortex/rc_server/remote_control.js
+TimeoutSec=0
+StandardOutput=tty
+RemainAfterExit=yes
+SysVStartPriority=99
+User=aeinstein
+Group=aeinstein
+WorkingDirectory=/home/pi/motorcortex/rc_server
+Restart=always
+RestartSec=10
+
+
+[Install]
+WantedBy=multi-user.target

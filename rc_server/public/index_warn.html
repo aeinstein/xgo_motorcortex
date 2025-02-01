@@ -1,0 +1,83 @@
+<html lang="">
+<head>
+	<title></title>
+	<meta http-equiv="Content-type" content="text/html; charset=UTF-8" />
+	<meta http-equiv="X-UA-Compatible" content="chrome=1">
+	<link id="mainStyle" rel="STYLESHEET" type="text/css" href="style.css">
+</head>
+
+<body onload="checkCa()" class="background">
+
+<div id="warning">
+	Achtung: Diese Seite erfordert SSL Verschlüsselung !<br>
+	<br>
+	Ein dafür benötigtes Zertifikat scheint noch nicht installiert zu sein.<br>
+	<br>
+	<div class="button ok" onclick="installCa()">Ja, jetzt installieren</div>
+	<div class="button no" onclick="goSSL()">Nein, weiter ohne Zertifikat</div>	
+</div>
+<iframe id="manual" style="display: none" src=""></iframe>
+<iframe id="downloader" style="display: none" src=""></iframe>
+</body>
+</html>	
+	
+<script>
+function newXMLHttpRequest() {
+	let xmlHttp;
+
+	try {
+		xmlHttp = new ActiveXObject("Msxml2.XMLHTTP");
+	} catch (e) {
+		try {
+			xmlHttp = new ActiveXObject("Microsoft.XMLHTTP");
+		} catch (f) {
+			xmlHttp = new XMLHttpRequest();
+		}
+	}
+	return xmlHttp;
+}
+
+function checkCa(){
+	const xmlHttp = newXMLHttpRequest();
+
+	xmlHttp.open("POST", "https://riderpi:1080/test.html", true);
+
+	xmlHttp.onreadystatechange = function() {       
+		if(xmlHttp.readyState === 4) {
+			switch(xmlHttp.status) {
+			case 0:
+			   showWarning();
+			   break;
+
+			case 200:
+				goSSL();
+				break;
+
+			default:
+				//displayMessage("readyState = " + xmlHttp.readyState + "\nstatus = " + xmlHttp.status, true);
+				break;
+			}
+		}
+	}
+
+	xmlHttp.send();
+}
+
+function installCa(){
+	document.getElementById("downloader").src = "http://riderpi/rootCA.crt";
+	
+	document.getElementById("warning").style.display = "none";
+
+	document.getElementById("manual").src = "https://wiki.tellimate.de";
+	document.getElementById("manual").style.display = "inline-block";
+}
+
+function showWarning(){
+	document.getElementById("warning").style.display = "inline-block";
+}
+
+function goSSL(){
+	document.location.href = "https://riderpi:1080";
+}
+</script>
+
