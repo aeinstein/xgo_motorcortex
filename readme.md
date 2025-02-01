@@ -79,6 +79,8 @@ You can shutdown, if you press Button A and Button B 3 Seconds.
 
 
 ## The Display Driver
+The Display driver based on (https://github.com/libdriver/st7789).
+
 It is a userspace daemon which creates a fifo /tmp/lcd0
 
 You can send raw bitmap RGB565.
