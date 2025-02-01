@@ -204,7 +204,7 @@ function connectWS(){
 
 function showPlayButton(){
     const b = document.createElement("BUTTON");
-    b.innerHTML = "play";
+    b.innerHTML = "Engage media";
     b.onclick = () => {
         rtmp_player.play("live")
     }
