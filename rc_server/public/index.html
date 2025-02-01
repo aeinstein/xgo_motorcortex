@@ -64,12 +64,12 @@
                     <button id="btnStrobe">Strobe</button>
                     <table style="width: 100%;">
                         <tr>
-                            <td><input type="color" id="led0"></td>
-                            <td><input type="color" id="led3"></td>
+                            <td><input type="color" id="led0" data-cmd="led0:%value%"></td>
+                            <td><input type="color" id="led3" data-cmd="led3:%value%"></td>
                         </tr>
                         <tr>
-                            <td><input type="color" id="led1"></td>
-                            <td><input type="color" id="led2"></td>
+                            <td><input type="color" id="led1" data-cmd="led1:%value%"></td>
+                            <td><input type="color" id="led2" data-cmd="led2:%value%"></td>
                         </tr>
                     </table>
                 </div>
@@ -79,10 +79,10 @@
                 <div id="attention_tab">
                     <table>
                         <tr>
-                            <td style="height: 130px"><input type="range" id="height" min="17" max="115"></td>
+                            <td style="height: 130px"><input type="range" id="height" min="17" max="115" data-cmd="H:%value%"></td>
                         </tr>
                         <tr>
-                            <td><input type="range" id="roll"  min="-25" max="25"></td>
+                            <td><input type="range" id="roll"  min="-25" max="25" data-cmd="R:%value%"></td>
                         </tr>
                     </table>
                 </div>
@@ -93,13 +93,31 @@
             <td style="text-align: center">
                 <div id="actions">
                     Actions:
-                    <button id="btnAction1">1</button>
-                    <button id="btnAction2">2</button>
-                    <button id="btnAction3">3</button>
-                    <button id="btnAction4">4</button>
-                    <button id="btnAction5">5</button>
-                    <button id="btnAction6">6</button>
-                    <button id="btnAction255">Stop</button>
+                    <button data-cmd="A:1">1</button>
+                    <button data-cmd="A:2">2</button>
+                    <button data-cmd="A:3">3</button>
+                    <button data-cmd="A:4">4</button>
+                    <button data-cmd="A:5">5</button>
+                    <button data-cmd="A:6">6</button>
+                    <button data-cmd="A:255">Stop</button>
+                </div>
+
+                <br>
+                <div id="emotions">
+                    Emotions:
+                    <button data-cmd="E:Angry">Angry</button>
+                    <button data-cmd="E:cute">Cute</button>
+                    <button data-cmd="E:doubt">Doubt</button>
+                    <button data-cmd="E:embarrassed">Embarrassed</button>
+                    <button data-cmd="E:grievance">Grievance</button>
+                    <button data-cmd="E:hate">Hate</button>
+                    <button data-cmd="E:laugh">Laugh</button>
+                    <button data-cmd="E:like">Like</button>
+                    <button data-cmd="E:sad">Sad</button>
+                    <button data-cmd="E:shy">Shy</button>
+                    <button data-cmd="E:sleep">Sleep</button>
+                    <button data-cmd="E:surprised">Surprised</button>
+                    <button data-cmd="E:vertigo">Vertigo</button>
                 </div>
             </td>
             <td></td>

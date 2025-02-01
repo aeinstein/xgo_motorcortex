@@ -7,6 +7,8 @@ const WebSocket = require('ws');
 const PORT = 6666;
 const device_path = "/proc/XGORider";
 
+const exec = require('child_process').exec;
+
 const keys = {
     //ca: fs.readFileSync('rootCA.crt'), included in fullchain
     cert: fs.readFileSync('fullchain.crt'),
@@ -127,6 +129,10 @@ wss.on('connection', (ws) => {
             case 'led3':
                 writeData(device_path + "/leds/" + ar[0].substring(3), ar[1])
                 break;
+
+            case "E":   // Emotion
+                playEmotion(ar[1]);
+                break;
         }
 
         // Echoing the message back to the client
@@ -151,3 +157,17 @@ wss.on('connection', (ws) => {
         ws.send(msg);
     }
 });
+
+function playEmotion(emotion) {
+    console.log(`Playing Emotion: ${emotion}`);
+
+    const child = exec("./scripts/showEmotion emotions/" + emotion,
+        (error, stdout, stderr) => {
+            console.log('stdout: ' + stdout);
+            console.log('stderr: ' + stderr);
+
+            if (error !== null) {
+                console.log('exec error: ' + error);
+            }
+        });
+}

@@ -42,31 +42,9 @@ function stopMovement(evt){
     currentAction = "";
 }
 
-function setLed(evt){
-    const led = evt.target.id;
-
-    sendToServer(led + ":" + evt.target.value);
-}
-
 function sendToServer(msg){
     console.log(msg);
     ws.send(msg);
-}
-
-function setHeight(evt){
-    let value = Number(evt.target.value);
-    value += 128;
-    sendToServer("H:" + value);
-}
-
-function setRoll(evt){
-    let value = Number(evt.target.value);
-    value += 128;
-    sendToServer("R:" + value);
-}
-
-function shutdown(evt){
-    sendToServer("S:0");
 }
 
 function calibration(evt){
@@ -79,9 +57,14 @@ function calibration(evt){
     }
 }
 
-function setAction(evt){
-    let button = evt.target.id.substring(9);
-    sendToServer("A:" + button);
+function sendCommand(evt){
+    let cmd = evt.target.getAttribute("data-cmd");
+    console.log(cmd);
+
+    if(cmd) {
+        cmd = cmd.replace("%value%", evt.target.value);
+        sendToServer(cmd)
+    }
 }
 
 function setLedsOff(){
@@ -128,17 +111,25 @@ function rotateStrobe(){
 // EventHandler
 document.getElementById("movement_tab").addEventListener("mousedown", startMovement);
 document.getElementById("movement_tab").addEventListener("mouseup", stopMovement);
-document.getElementById("height").addEventListener("change", setHeight);
-document.getElementById("roll").addEventListener("change", setRoll);
-document.getElementById("led0").addEventListener("change", setLed);
-document.getElementById("led1").addEventListener("change", setLed);
-document.getElementById("led2").addEventListener("change", setLed);
-document.getElementById("led3").addEventListener("change", setLed);
-document.getElementById("actions").addEventListener("click", setAction);
+
+
+
 document.getElementById("btnCalibration").addEventListener("click", calibration);
-document.getElementById("btnShutdown").addEventListener("click", shutdown);
 document.getElementById("btnLedsOff").addEventListener("click", setLedsOff);
 document.getElementById("btnStrobe").addEventListener("click", toggleStrobe);
+
+
+document.getElementById("led0").addEventListener("change", sendCommand);
+document.getElementById("led1").addEventListener("change", sendCommand);
+document.getElementById("led2").addEventListener("change", sendCommand);
+document.getElementById("led3").addEventListener("change", sendCommand);
+
+document.getElementById("height").addEventListener("change", sendCommand);
+document.getElementById("roll").addEventListener("change", sendCommand);
+
+document.getElementById("btnShutdown").addEventListener("click", sendCommand);
+document.getElementById("actions").addEventListener("click", sendCommand);
+document.getElementById("emotions").addEventListener("click", sendCommand);
 
 function request(path){
     const xhttp = new XMLHttpRequest();
