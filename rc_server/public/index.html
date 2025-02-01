@@ -85,10 +85,11 @@ if(empty($_SERVER['HTTPS'])) {
                 <div id="attention_tab">
                     <table>
                         <tr>
-                            <td style="height: 130px"><input type="range" id="height" min="17" max="115" data-cmd="H:%value%"></td>
+                            <td style="height: 130px"><label for="height">Height</label><input type="range" id="height" min="17" max="115" data-cmd="H:%value%"></td>
                         </tr>
                         <tr>
-                            <td><input type="range" id="roll"  min="-25" max="25" data-cmd="R:%value%"></td>
+                            <td><input type="range" id="roll"  min="-25" max="25" data-cmd="R:%value%"><br>
+                            Roll</td>
                         </tr>
                     </table>
                 </div>

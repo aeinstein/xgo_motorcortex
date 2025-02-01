@@ -175,24 +175,43 @@ function getProcData(){
 dataloader = window.setInterval(getProcData, 1000);
 
 
-const ws = new WebSocket('wss://riderpi:1080');
+let ws = null;
+let connect_pid = -1;
 
-ws.onmessage = (event) => {
-    console.log(`Message from server: ${event.data}`);
-};
+function connectWS(){
+    ws = new WebSocket("wss://riderpi:1080");
 
-ws.onclose = (evt) => {
-    console.log('Connection closed', evt);
-};
+    ws.onopen = (e) => {
+        console.log(e);
+        connect_pid = -1;
+        ws.send('Hello, Server!');
+    };
 
-ws.onerror= (evt) => {
-    console.log('error', evt);
-};
+    ws.onclose = (e) => {
+        console.log('Connection closed', e);
+        if(connect_pid === -1) connect_pid = setTimeout(connectWS, 3000);
+    };
 
-ws.onopen = () => {
-    console.log('Connected to server');
-    ws.send('Hello, Server!');
-};
+    ws.onerror= (e) => {
+        console.log('error', e);
+        if(connect_pid === -1) connect_pid = setTimeout(connectWS, 3000);
+    };
+
+    ws.onmessage = (e) => {
+        console.log(`Message from server: ${e.data}`);
+    };
+}
+
+function showPlayButton(){
+    const b = document.createElement("BUTTON");
+    b.innerHTML = "play";
+    b.onclick = () => {
+        rtmp_player.play("live")
+    }
+    document.body.appendChild(b);
+}
+
+connectWS();
 
 const videoElement = document.getElementById('mainvideo');
 
@@ -204,6 +223,9 @@ rtmp_player.open("riderpi", 9001).then(()=>{   // Host, Port of WebRTMP Proxy
     rtmp_player.connect("demo").then(()=>{                  // Application name
         rtmp_player.play("live").then(()=>{      // Stream name
             console.log("playing");
+        }).catch((e)=>{
+            console.error(e);
+            showPlayButton();
         })
     })
 })
