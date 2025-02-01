@@ -1,5 +1,6 @@
 # XGORider - RiderPI Software
 
+# PreAlpha Phase !!!!!!!!!
  
 This is a lightweight kernel module for the xgorider/riderpi. The provided python scripts are shitty as hell, slow and dumb.
 And yes I know that accessing a tty via /dev is not the 'right' way !!! Right way is to develop a platform driver. You are free to do.
