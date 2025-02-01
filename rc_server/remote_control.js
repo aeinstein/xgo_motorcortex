@@ -1,30 +1,29 @@
 const fs = require('fs');
 const express = require('express');
-const https = require('https');
+const http = require('http');
 const {WebSocketServer} = require("ws");
 const WebSocket = require('ws');
-
-const PORT = 6666;
+const port = 1080;
 const device_path = "/proc/XGORider";
 
 const exec = require('child_process').exec;
-
+/*
 const keys = {
     //ca: fs.readFileSync('rootCA.crt'), included in fullchain
     cert: fs.readFileSync('fullchain.crt'),
     key: fs.readFileSync('privkey.key')
-};
+};*/
 
 const app = express();
-const server = https.createServer(keys, app);
+const server = http.createServer(app);
 
 
 app.use("/", express.static('public'));
 xgo_passthrough("battery");
 xgo_passthrough("state");
 xgo_passthrough("yaw");
-server.listen(1080, () => {
-    console.log(`Server is listening on https://localhost:1080`);
+server.listen(port, () => {
+    console.log(`Server is listening on https://riderpi`);
 });
 
 let sendToClient = ()=>{};
@@ -87,11 +86,8 @@ wss.on('connection', (ws) => {
     ws.on('message', (buffer) => {
         console.log(`Received message: ${buffer}`);
 
-
         const message = buffer.toString()
         console.log(message)
-
-
 
         const ar = message.split(':');
         switch (ar[0]) {
