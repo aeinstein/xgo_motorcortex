@@ -7,7 +7,7 @@
 </head>
 <body>
 <div style="text-align: center">
-    <table style="background-color: #252525; display: inline-block">
+    <table id="main">
         <tr>
             <td style="vertical-align: bottom; text-align: center">
                 <button id="btnShutdown">Shutdown</button>
@@ -101,8 +101,11 @@
                     <button data-cmd="A:6">6</button>
                     <button data-cmd="A:255">Stop</button>
                 </div>
-
-                <br>
+            </td>
+            <td></td>
+        </tr>
+        <tr>
+            <td colspan="3">
                 <div id="emotions">
                     Emotions:
                     <button data-cmd="E:Angry">Angry</button>
@@ -120,7 +123,6 @@
                     <button data-cmd="E:vertigo">Vertigo</button>
                 </div>
             </td>
-            <td></td>
         </tr>
     </table>
 </div>
