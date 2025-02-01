@@ -8,9 +8,6 @@
       <file path="$PROJECT_DIR$/kernel_module" />
       <file path="$PROJECT_DIR$/userspace" />
     </sourceRoots>
-    <libraryRoots>
-      <file path="$PROJECT_DIR$/st7789" />
-    </libraryRoots>
   </component>
   <component name="ExternalStorageConfigurationManager" enabled="true" />
   <component name="MakefileSettings">
