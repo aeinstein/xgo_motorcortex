@@ -13,8 +13,8 @@
 	<br>
 	Ein dafür benötigtes Zertifikat scheint noch nicht installiert zu sein.<br>
 	<br>
-	<div class="button ok" onclick="installCa()">Ja, jetzt installieren</div>
-	<div class="button no" onclick="goSSL()">Nein, weiter ohne Zertifikat</div>	
+	<button id="btnOk" onclick="installCa()"><span>Ja, jetzt installieren</span></button>
+	<button id="btnSkip" onclick="goSSL()"><span>Nein, weiter ohne Zertifikat</span></button>
 </div>
 <iframe id="manual" style="display: none" src=""></iframe>
 <iframe id="downloader" style="display: none" src=""></iframe>
@@ -40,7 +40,7 @@ function newXMLHttpRequest() {
 function checkCa(){
 	const xmlHttp = newXMLHttpRequest();
 
-	xmlHttp.open("POST", "https://riderpi:1080/test.html", true);
+	xmlHttp.open("POST", "https://riderpi/test.html", true);
 
 	xmlHttp.onreadystatechange = function() {       
 		if(xmlHttp.readyState === 4) {
@@ -68,7 +68,7 @@ function installCa(){
 	
 	document.getElementById("warning").style.display = "none";
 
-	document.getElementById("manual").src = "https://wiki.tellimate.de";
+	document.getElementById("manual").src = "ssl_manual.html";
 	document.getElementById("manual").style.display = "inline-block";
 }
 
@@ -77,7 +77,8 @@ function showWarning(){
 }
 
 function goSSL(){
-	document.location.href = "https://riderpi:1080";
+	document.location.href = "https://riderpi";
 }
+
 </script>
 

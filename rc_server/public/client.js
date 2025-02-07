@@ -179,7 +179,7 @@ let ws = null;
 let connect_pid = -1;
 
 function connectWS(){
-    ws = new WebSocket("wss://riderpi:1080");
+    ws = new WebSocket("wss://riderpi:443");
 
     ws.onopen = (e) => {
         console.log(e);

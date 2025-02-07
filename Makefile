@@ -1,6 +1,6 @@
 MAKEFILES := $(wildcard */Makefile)
 
-DIRS := kernel_module st7789/project/riderpi
+DIRS := rc_server kernel_module st7789/project/riderpi
 #DIRS := userspace kernel_module st7789/project/riderpi
 
 .PHONY: all clean $(DIRS)
