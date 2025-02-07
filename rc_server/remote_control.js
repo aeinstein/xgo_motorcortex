@@ -142,6 +142,9 @@ wss.on('connection', (ws) => {
     // Handling client disconnection
     ws.on('close', () => {
         console.log('Client disconnected');
+        // stop on connection lost
+        writeData(device_path + "/speed_z", 128);
+        writeData(device_path + "/speed_x", 128);
     });
 
     ws.on('error', (error) => {

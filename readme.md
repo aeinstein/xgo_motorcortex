@@ -105,7 +105,7 @@ Antwort von 192.168.53.110: Bytes=32 Zeit<1ms TTL=64
 ````
 
 ### First connect
-The URL is: http://riderpi:1080
+The URL is: http://riderpi
 
 Because of security limitation, you need a certificate. I had already included one, but you need to download and install the matching CA in your browser.
 You will automatically redirected to do that. When the CA is installed you will be automatically redirected to the interface. 
